@@ -34,12 +34,12 @@ post("/room") do
 end
 
 post("/stats") do
-  url, new_stat = JSON.parse(request.read).fetch_values(:url, :stat)
+  url, new_stat = JSON.parse(request.body.read).fetch_values("url", "stat")
   STATS.transaction do
     old_stats = STATS[url]
     halt 403 if old_stats.nil?
     old_stats << new_stat
-    STATS[url] = stats
+    STATS[url] = old_stats
   end
   {}.to_json
 end

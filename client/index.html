@@ -1,23 +1,25 @@
 ---
 layout: default
 ---
+
 <main>
-  <section id="controls">
+  <article>
+    <h1>Dashboard</h1>
     <button id="create">New Room</button>
-  </section>
-  <section id="display">
+
+    <h2>Call Stats</h2>
+    <ul id="rooms"><li><em>Loading old rooms&hellp;</em></li></ul>
+    <hr>
     <div id="frame"></div>
-    <ul id="rooms">
-      <li><em>Loading old rooms&hellp;</em></li>
-    </ul>
-  </section>
+    </section>
+  </article>
 </main>
 
 <script>
   window.API = "{{ site.env['15SECONDLY_API'] }}";
 
   setupRooms();
-  document.getElementById("create").addEventListener("click", createRoom);
+  document.getElementById("create").addEventListener("click", newRoom);
 
   function setupRooms() {
     fetch(window.API + "/rooms", { method: "GET" })
@@ -35,32 +37,37 @@ layout: default
     }
   }
 
-  function createRoom() {
+  function newRoom() {
     fetch(window.API + "/room", { method: "POST" })
       .then(response => response.json())
       .then(viewFrame)
   }
 
   function viewFrame(room) {
-    const callFrame = window.DailyIframe.createFrame(document.getElementById("frame"), {
+    const parent = document.getElementById("frame");
+    const callFrame = window.DailyIframe.createFrame(parent, {
       url: room.url,
       showLeaveButton: true,
     });
     callFrame.join();
-    callFrame.on("loaded", () => setupFrame(callFrame));
+    callFrame.on("loaded", () => setupFrame(parent, callFrame, room));
     callFrame.on("left-meeting", () => cleanupFrame(callFrame));
   }
 
-  function setupFrame(callFrame) {
-    // TODO
-    // setInterval(() => {
-    //   callFrame.getNetworkStats()
-    //     .then(stat => fetch(window.API + "/stats"))
-    // }, 2000)
+  function setupFrame(parent, callFrame, room) {
+    parent.scrollIntoView({ behavior: "smooth" });
+    callFrame.__intervalId = setInterval(() => newStat(callFrame, room), 2000);
   }
 
   function cleanupFrame(callFrame) {
-    // TODO clearInterval
     callFrame.destroy();
+    clearInterval(callFrame.__intervalId);
+  }
+
+  function newStat(callFrame, room) {
+    callFrame.getNetworkStats().then(stat => fetch(window.API + "/stats", {
+      method: "POST",
+      body: JSON.stringify({ stat, url: room.url }),
+    }));
   }
 </script>
