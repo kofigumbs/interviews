@@ -23,9 +23,13 @@ end
 #   per Ruby process. See "Modular vs. Classic Style" section of intro for
 #   more info: <http://sinatrarb.com/intro.html>
 
+get("/rooms") do
+  STATS.to_a.to_json
+end
+
 post("/room") do
   room = DAILY.create_room!
-  STATS[room.url] = []
+  STATS[room.fetch(:url)] = []
   room.to_json
 end
 

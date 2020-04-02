@@ -1,29 +1,66 @@
 ---
+layout: default
 ---
-<!DOCTYPE HTML>
-<html>
-  {% include head.html %}
-  <body>
-    <button id="create">Create Room</button>
-    <pre><code id="logs"></code></pre>
-    <script>
-      window.API = "{{ site.env['15SECONDLY_API'] }}";
+<main>
+  <section id="controls">
+    <button id="create">New Room</button>
+  </section>
+  <section id="display">
+    <div id="frame"></div>
+    <ul id="rooms">
+      <li><em>Loading old rooms&hellp;</em></li>
+    </ul>
+  </section>
+</main>
 
-      document.getElementById("create").addEventListener("click", function(event) {
-        fetch(window.API + "/room", { method: "POST" })
-          .then(response => response.json())
-          .then(viewRoom)
-      });
+<script>
+  window.API = "{{ site.env['15SECONDLY_API'] }}";
 
-      function viewRoom(room) {
-        const callFrame = window.DailyIframe.createFrame();
-        callFrame.join({ url: room.url });
-        callFrame.on("loaded", () => setInterval(() => callFrame.getNetworkStats().then(log), 2000));
-      }
+  setupRooms();
+  document.getElementById("create").addEventListener("click", createRoom);
 
-      function log(data) {
-        window.logs.innerHTML += JSON.stringify(data) + "\n";
-      }
-    </script>     
-  </body>
-</html>
+  function setupRooms() {
+    fetch(window.API + "/rooms", { method: "GET" })
+      .then(response => response.json())
+      .then(viewRooms);
+  }
+
+  function viewRooms(array) {
+    const parent = document.getElementById("rooms");
+    parent.innerHTML = "";
+    for (const [ url, stats ] of array) {
+      const li = document.createElement("li");
+      li.innerText = url;
+      parent.appendChild(li);
+    }
+  }
+
+  function createRoom() {
+    fetch(window.API + "/room", { method: "POST" })
+      .then(response => response.json())
+      .then(viewFrame)
+  }
+
+  function viewFrame(room) {
+    const callFrame = window.DailyIframe.createFrame(document.getElementById("frame"), {
+      url: room.url,
+      showLeaveButton: true,
+    });
+    callFrame.join();
+    callFrame.on("loaded", () => setupFrame(callFrame));
+    callFrame.on("left-meeting", () => cleanupFrame(callFrame));
+  }
+
+  function setupFrame(callFrame) {
+    // TODO
+    // setInterval(() => {
+    //   callFrame.getNetworkStats()
+    //     .then(stat => fetch(window.API + "/stats"))
+    // }, 2000)
+  }
+
+  function cleanupFrame(callFrame) {
+    // TODO clearInterval
+    callFrame.destroy();
+  }
+</script>

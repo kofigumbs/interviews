@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+  <title>15secondly</title>
+
+  <!-- TODO: Bundle --->
+  <script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+  <script crossorigin src="https://unpkg.com/d3"></script>
+  <script crossorigin src="https://unpkg.com/tufte"></script>
+
+  <style>
+    /* RESET */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+    body {
+      font-size: 16px;
+    }
+    input, button {
+      font-size: 1rem;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* APP STUFF
+       Styling with id's for now — will update to classes if things get crazy.
+     */
+    #frame:not(:empty) {
+      position: fixed;
+      top: 0;
+      left:0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>{{ content }}</body>
+</html>
