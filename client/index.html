@@ -1,0 +1,27 @@
+---
+---
+<!DOCTYPE HTML>
+<html>
+  {% include head.html %}
+  <body>
+    <pre><code id="logs"></code></pre>
+    <script>
+      window.API = "{{ site.env['15SECONDLY_API'] }}";
+
+      window.addEventListener("DOMContentLoaded", () => {
+        // DAILY TEST
+        callFrame = window.DailyIframe.createFrame();
+        callFrame.join({ url: "https://hkgumbs.daily.co/hello" });
+        // https://github.com/daily-co/daily-demos/blob/master/static-demos/remote-monitoring-demo/remote-monitoring-device.html#L86
+        callFrame.on("loaded", () => setInterval(() => callFrame.getNetworkStats().then(log), 2000));
+
+        // API TEST
+        fetch(API).then(response => response.json()).then(log)
+      });
+
+      function log(data) {
+        window.logs.innerHTML += JSON.stringify(data) + "\n";
+      }
+    </script>     
+  </body>
+</html>

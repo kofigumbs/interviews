@@ -1,0 +1,6 @@
+[build]
+  command = "jekyll build --source client"
+  publish = "_site"
+
+[build.environment]
+  15SECONDLY_API = "https://fifteensecondly.herokuapp.com"
