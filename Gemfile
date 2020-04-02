@@ -12,5 +12,6 @@ group :client, :jekyll_plugins do
 end
 
 group :server do
+  gem "httparty"
   gem "sinatra"
 end

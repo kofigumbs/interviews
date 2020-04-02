@@ -3,5 +3,10 @@
   publish = "_site"
 
 [build.environment]
-  RUBY_VERSION  = "2.6.5"
+  RUBY_VERSION   = "2.6.5"
   15SECONDLY_API = "https://fifteensecondly.herokuapp.com"
+
+[[redirects]]
+  from   = "favicon.ico"
+  to     = "https://daily.co/favicon.ico"
+  status = 200
