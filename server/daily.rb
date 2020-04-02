@@ -10,6 +10,6 @@ class Daily
   end
 
   def create_room!
-    { id: rand(264) } # TODO
+    { url: "https://hkgumbs.daily.co/hello" } # TODO
   end
 end
