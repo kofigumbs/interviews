@@ -28,6 +28,6 @@ layout: default
   function newRoom() {
     fetch(window.API + "/room", { method: "POST" })
       .then(response => response.json())
-      .then(room => window.location.href = "/call?url=" + encodeURIComponent(room.url));
+      .then(room => window.location.href = "/call?url=" + btoa(room.url));
   }
 </script>

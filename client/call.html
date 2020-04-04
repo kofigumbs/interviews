@@ -50,6 +50,7 @@ layout: default
   }
 
   function setupCall(url) {
+    const url = atob(new URLSearchParams(location.search).get("url"));
     const frame = document.getElementById("frame");
     const callFrame = window.DailyIframe.wrap(frame, {
       showLeaveButton: true,
