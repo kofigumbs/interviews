@@ -1,0 +1,38 @@
+---
+layout: default
+---
+
+<style>
+figure::before {
+  content: attr(id);
+  font-family: monospace;
+}
+</style>
+
+<figure id="video_recv_bits_per_second"></figure>
+<figure id="video_send_bits_per_second"></figure>
+<figure id="video_recv_packet_loss"></figure>
+<figure id="video_send_packet_loss"></figure>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  fetch(window.API + "/rooms/" + params.get("room") + "/stats")
+    .then(response => response.json())
+    .then(viewPlots);
+
+  function viewPlots(stats) {
+    const figures = [
+      "video_recv_bits_per_second",
+      "video_send_bits_per_second",
+      "video_recv_packet_loss",
+      "video_send_packet_loss",
+    ];
+    for (const figure of figures) {
+      const data = stats.map(stat => ({
+        x: moment(stat.recorded_at).valueOf(),
+        y: stat[figure],
+      }));
+      new tufte.LinePlot("#" + figure, data, { scaleType: { x: "time" } });
+    }
+  }
+</script>
