@@ -17,13 +17,14 @@ layout: default
     width: 0.01em;
   }
 
-  main  {
+  figure  {
     position: relative;
     width: 100%;
+    margin: 0;
     padding: 0;
 
     /* This creates a responsive element with a fixed aspect ratio, here 1:1.
-       It works because padding uses the same units as width.
+       It works because padding percentages are in terms of the element's width.
      */
     height: 0;
     padding-bottom: 100%;
@@ -38,10 +39,13 @@ layout: default
   }
 </style>
 
-<input id="url">
-<button id="copy">Copy Link</button>
 <main>
-  <iframe id="frame" allow="microphone; camera; autoplay" frameborder="0"></iframe>
+  {% include back.html %}
+  <p><input id="url"><button id="copy">Copy Link</button></p>
+  <figure>
+    <!-- <https://docs.daily.co/reference#%EF%B8%8F-wrap> -->
+    <iframe id="frame" allow="microphone; camera; autoplay" frameborder="0"></iframe>
+  </figure>
 </main>
 
 <script>

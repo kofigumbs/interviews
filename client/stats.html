@@ -3,36 +3,51 @@ layout: default
 ---
 
 <style>
-figure::before {
-  content: attr(id);
-  font-family: monospace;
-}
+  figure {
+    overflow: scroll; /* Tufte.js sizes to container, but is not responsive */
+  }
 </style>
 
-<figure id="video_recv_bits_per_second"></figure>
-<figure id="video_send_bits_per_second"></figure>
-<figure id="video_recv_packet_loss"></figure>
-<figure id="video_send_packet_loss"></figure>
+<main>
+  {% include back.html %}
+  <h1>Stats from <em id="date"></em></h1>
+  <p><code>video_recv_bits_per_second</code> / seconds into call</p>
+  <figure id="video_recv_bits_per_second"></figure>
+  <p><code>video_send_bits_per_second</code> / seconds into call</p>
+  <figure id="video_send_bits_per_second"></figure>
+  <p><code>video_recv_packet_loss</code> / seconds into call</p>
+  <figure id="video_recv_packet_loss"></figure>
+  <p><code>video_send_packet_loss</code> / seconds into call</p>
+  <figure id="video_send_packet_loss"></figure>
+</main>
 
 <script>
   const params = new URLSearchParams(location.search);
-  fetch(window.API + "/rooms/" + params.get("room") + "/stats")
+  fetch(window.API + "/rooms/" + params.get("room"))
     .then(response => response.json())
     .then(viewPlots);
 
-  function viewPlots(stats) {
-    const figures = [
-      "video_recv_bits_per_second",
-      "video_send_bits_per_second",
-      "video_recv_packet_loss",
-      "video_send_packet_loss",
-    ];
-    for (const figure of figures) {
-      const data = stats.map(stat => ({
-        x: moment(stat.recorded_at).valueOf(),
-        y: stat[figure],
-      }));
-      new tufte.LinePlot("#" + figure, data, { scaleType: { x: "time" } });
+  function viewPlots(room) {
+    document.getElementById("date").innerText = parseMoment(room.created_at).calendar();
+    for (const figure of document.querySelectorAll("figure")) {
+      new tufte.LinePlot(
+        /* Container element ID */
+        "#" + figure.id,
+
+        /* Data points: X is time, Y is the current stat */
+        room.stats.map(stat => ({
+          x: seconds(stat.recorded_at) - seconds(room.stats[0].recorded_at),
+          y: stat[figure.id],
+        })),
+      );
     }
+  }
+
+  function seconds(timestamp) {
+    return Math.round(parseMoment(timestamp).valueOf() / 1000);
+  }
+
+  function parseMoment(timestamp) {
+    return moment(timestamp, "YYYY-MM-DD hh:mm:ss ZZZZ");
   }
 </script>

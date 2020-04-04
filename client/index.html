@@ -8,9 +8,11 @@ button {
 }
 </style>
 
-<h1>Dashboard</h1>
-<button id="create">New Room</button>
-<ul id="rooms"></ul>
+<main>
+  <h1>Dashboard</h1>
+  <button id="create">New Room</button>
+  <ul id="rooms"></ul>
+</main>
 
 <script>
   setupRooms();
@@ -28,7 +30,7 @@ button {
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = link("/stats", { room: room.id });
-      a.innerText = moment(room.created_at).calendar();
+      a.innerText = parseMoment(room.created_at).calendar();
       li.appendChild(a);
       parent.appendChild(li);
     }
@@ -45,5 +47,9 @@ button {
     for (const [ key, value ] of Object.entries(query))
       params.append(key, value);
     return path + "?" + params.toString();
+  }
+
+  function parseMoment(timestamp) {
+    return moment(timestamp, "YYYY-MM-DD hh:mm:ss ZZZZ");
   }
 </script>

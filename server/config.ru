@@ -6,6 +6,7 @@ DAILY = Daily.new ENV.fetch("DAILY_API_KEY")
 
 DB = Sequel.connect ENV.fetch("DATABASE_URL")
 DB[File.read File.join(__dir__, "schema.sql")]
+DB.extension :pg_json
 
 # Allow access by any method, from any origin, for any route.
 # Since we're not authenticating yet, there's no reason to be too restrictive
@@ -33,8 +34,16 @@ post("/rooms") do
   DB[:rooms].returning.insert(room).first.to_json
 end
 
-get("/rooms/:room_id/stats") do
-  DB[:stats].where(room_id: params.fetch(:room_id)).to_a.to_json
+get("/rooms/:room_id") do
+  DB[:rooms]
+    .join(:stats, room_id: :id)
+    .select(
+      Sequel[:rooms][:id],
+      Sequel[:rooms][:created_at],
+      Sequel.lit("COALESCE(JSON_AGG(stats.*), '[]') AS stats"))
+    .where(Sequel[:rooms][:id] => params.fetch(:room_id))
+    .group(Sequel[:rooms][:id])
+    .first.to_json
 end
 
 post("/rooms/:room_id/stat") do
