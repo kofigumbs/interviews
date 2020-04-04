@@ -17,10 +17,6 @@ layout: default
     width: 0.01em;
   }
 
-  button {
-    font-size: inherit;
-  }
-
   main  {
     position: relative;
     width: 100%;
@@ -42,10 +38,8 @@ layout: default
   }
 </style>
 
-<h1>
-  <button id="copy">Copy Link</button>
-  <input id="url">
-</h1>
+<input id="url">
+<button id="copy">Copy Link</button>
 <main>
   <iframe id="frame" allow="microphone; camera; autoplay" frameborder="0"></iframe>
 </main>
@@ -64,19 +58,19 @@ layout: default
   }
 
   function setupFrame() {
-    const url = atob(new URLSearchParams(location.search).get("url"));
+    const params = new URLSearchParams(location.search);
     const frame = document.getElementById("frame");
     const callFrame = window.DailyIframe.wrap(frame, {
       showLeaveButton: true,
       showFullscreenButton: true,
     });
-    callFrame.join({ url });
-    callFrame.on("loaded", () => onLoaded(url, callFrame));
+    callFrame.join({ url: atob(params.get("url")) });
+    callFrame.on("loaded", () => onLoaded(params.get("id"), callFrame));
     callFrame.on("left-meeting", onLeftMeeting);
   }
 
-  function onLoaded(url, callFrame) {
-    setInterval(() => newStat(url, callFrame), 2000);
+  function onLoaded(id, callFrame) {
+    setInterval(() => newStat(id, callFrame), 2000);
   }
 
   function onLeftMeeting() {
@@ -84,10 +78,21 @@ layout: default
     window.location.href = "/";
   }
 
-  function newStat(url, callFrame) {
-    callFrame.getNetworkStats().then(stat => fetch(window.API + "/stats", {
+  function newStat(id, callFrame) {
+    const route = window.API + "/rooms/" + id + "/stat";
+    callFrame.getNetworkStats().then(data => fetch(route, {
       method: "POST",
-      body: JSON.stringify({ stat, url }),
+      body: JSON.stringify(formatStat(data.stats.latest)),
     }));
+  }
+
+  function formatStat(stat) {
+    return {
+      recorded_at: moment(stat.timestamp).format(), // ISO 8601
+      video_recv_bits_per_second: stat.videoRecvBitsPerSecond,
+      video_recv_packet_loss: stat.videoRecvPacketLoss,
+      video_send_bits_per_second: stat.videoSendBitsPerSecond,
+      video_send_packet_loss: stat.videoSendPacketLoss,
+    };
   }
 </script>

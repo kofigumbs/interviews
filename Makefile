@@ -17,11 +17,11 @@ dev:
 	@# server in its own child process (or "job" in make lingo).
 	make -j2 client server
 
-
 15SECONDLY_API_PORT = 3001
 client:
 	env 15SECONDLY_API="http://localhost:${15SECONDLY_API_PORT}" \
 		bundle exec jekyll serve --source client --open-url
 server:
-	rerun --dir server -- \
+	env DATABASE_URL="postgres://localhost/15secondly" \
+		rerun --dir server -- \
 		bundle exec rackup server/config.ru --port ${15SECONDLY_API_PORT}

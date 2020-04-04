@@ -54,6 +54,7 @@ GEM
       ruby2_keywords (~> 0.0.1)
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
+    pg (1.2.3)
     public_suffix (4.0.3)
     rack (2.2.2)
     rack-protection (2.0.8.1)
@@ -66,6 +67,7 @@ GEM
     safe_yaml (1.0.5)
     sassc (2.2.1)
       ffi (~> 1.9)
+    sequel (5.31.0)
     sinatra (2.0.8.1)
       mustermann (~> 1.0)
       rack (~> 2.0)
@@ -83,6 +85,8 @@ DEPENDENCIES
   httparty
   jekyll
   jekyll-environment-variables
+  pg
+  sequel
   sinatra
 
 RUBY VERSION

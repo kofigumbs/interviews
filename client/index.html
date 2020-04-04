@@ -2,8 +2,14 @@
 layout: default
 ---
 
+<style>
+button {
+  font-size: inherit;
+}
+</style>
+
 <h1>Dashboard</h1>
-<a id="create" href="#">New Room</a>
+<button id="create">New Room</button>
 <ul id="rooms"></ul>
 
 <script>
@@ -18,16 +24,26 @@ layout: default
 
   function viewRooms(array) {
     const parent = document.getElementById("rooms");
-    for (const [ url, stats ] of array) {
+    for (const room of array) {
       const li = document.createElement("li");
-      li.innerText = url;
+      const a = document.createElement("a");
+      a.href = link("/stats", { room: room.id });
+      a.innerText = moment(room.created_at).calendar();
+      li.appendChild(a);
       parent.appendChild(li);
     }
   }
 
   function newRoom() {
-    fetch(window.API + "/room", { method: "POST" })
+    fetch(window.API + "/rooms", { method: "POST" })
       .then(response => response.json())
-      .then(room => window.location.href = "/call?url=" + btoa(room.url));
+      .then(room => window.location.href = link("/call", { id: room.id, url: btoa(room.url) }));
+  }
+
+  function link(path, query) {
+    const params = new URLSearchParams();
+    for (const [ key, value ] of Object.entries(query))
+      params.append(key, value);
+    return path + "?" + params.toString();
   }
 </script>

@@ -1,10 +1,11 @@
-require "net/http"
+require "sequel"
 require "sinatra"
 require_relative "daily"
-require_relative "repository"
 
-DAILY = Daily.new(ENV.fetch("DAILY_API_KEY"))
-STATS = Repository.new(:stats) # opaque "database" reference
+DAILY = Daily.new ENV.fetch("DAILY_API_KEY")
+
+DB = Sequel.connect ENV.fetch("DATABASE_URL")
+DB[File.read File.join(__dir__, "schema.sql")]
 
 # Allow access by any method, from any origin, for any route.
 # Since we're not authenticating yet, there's no reason to be too restrictive
@@ -24,23 +25,22 @@ end
 #   more info: <http://sinatrarb.com/intro.html>
 
 get("/rooms") do
-  STATS.to_a.to_json
+  DB[:rooms].reverse(:created_at).to_a.to_json
 end
 
-post("/room") do
-  room = DAILY.create_room!
-  STATS[room.fetch(:url)] = []
-  room.to_json
+post("/rooms") do
+  room = DAILY.create_room!.slice("url", "name")
+  DB[:rooms].returning.insert(room).first.to_json
 end
 
-post("/stats") do
-  url, new_stat = JSON.parse(request.body.read).fetch_values("url", "stat")
-  STATS.transaction do
-    old_stats = STATS[url]
-    halt 403 if old_stats.nil?
-    old_stats << new_stat
-    STATS[url] = old_stats
-  end
+get("/rooms/:room_id/stats") do
+  DB[:stats].where(room_id: params.fetch(:room_id)).to_a.to_json
+end
+
+post("/rooms/:room_id/stat") do
+  room_id = params.fetch(:room_id)
+  stat = JSON.parse(request.body.read)
+  DB[:stats].insert stat.merge(room_id: room_id)
   {}.to_json
 end
 

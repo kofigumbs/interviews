@@ -13,5 +13,7 @@ end
 
 group :server do
   gem "httparty"
+  gem "pg"
+  gem "sequel"
   gem "sinatra"
 end
