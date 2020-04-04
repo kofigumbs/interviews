@@ -3,9 +3,22 @@ layout: default
 ---
 
 <style>
-  input, button {
-    font-size: 1rem;
-    margin: 20px 0;
+  input {
+    /* This is to support JS copy: shouldn't be visible, but needs to be in DOM.
+       <https://github.com/jgthms/bulma/blob/f75ae3db01cb3be96dde517811f4950540f4c76f/sass/base/helpers.sass#L178-L186>
+     */
+    border: none;
+    clip: rect(0, 0, 0, 0);
+    height: 0.01em;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 0.01em;
+  }
+
+  button {
+    font-size: inherit;
   }
 
   main  {
@@ -29,27 +42,28 @@ layout: default
   }
 </style>
 
-<input id="url" readonly>
-<button id="copy">Copy Link</button>
+<h1>
+  <button id="copy">Copy Link</button>
+  <input id="url">
+</h1>
 <main>
   <iframe id="frame" allow="microphone; camera; autoplay" frameborder="0"></iframe>
 </main>
 
 <script>
-  const url = new URLSearchParams(location.search).get("url");
-  setupLink(url);
-  setupCall(url);
+  setupCopy();
+  setupFrame();
 
-  function setupLink(url) {
-    const input = document.getElementById("url")
-    input.value = url;
+  function setupCopy() {
+    const input = document.getElementById("url");
+    input.value = window.location.href;
     document.getElementById("copy").addEventListener("click", function() {
       input.select();
       document.execCommand("copy");
     });
   }
 
-  function setupCall(url) {
+  function setupFrame() {
     const url = atob(new URLSearchParams(location.search).get("url"));
     const frame = document.getElementById("frame");
     const callFrame = window.DailyIframe.wrap(frame, {
