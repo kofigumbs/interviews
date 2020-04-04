@@ -2,22 +2,11 @@
 layout: default
 ---
 
-<main>
-  <article>
-    <h1>Dashboard</h1>
-    <button id="create">New Room</button>
-
-    <h2>Call Stats</h2>
-    <ul id="rooms"><li><em>Loading old rooms&hellp;</em></li></ul>
-    <hr>
-    <div id="frame"></div>
-    </section>
-  </article>
-</main>
+<h1>Dashboard</h1>
+<a id="create" href="#">New Room</a>
+<ul id="rooms"></ul>
 
 <script>
-  window.API = "{{ site.env['15SECONDLY_API'] }}";
-
   setupRooms();
   document.getElementById("create").addEventListener("click", newRoom);
 
@@ -29,7 +18,6 @@ layout: default
 
   function viewRooms(array) {
     const parent = document.getElementById("rooms");
-    parent.innerHTML = "";
     for (const [ url, stats ] of array) {
       const li = document.createElement("li");
       li.innerText = url;
@@ -40,34 +28,6 @@ layout: default
   function newRoom() {
     fetch(window.API + "/room", { method: "POST" })
       .then(response => response.json())
-      .then(viewFrame)
-  }
-
-  function viewFrame(room) {
-    const parent = document.getElementById("frame");
-    const callFrame = window.DailyIframe.createFrame(parent, {
-      url: room.url,
-      showLeaveButton: true,
-    });
-    callFrame.join();
-    callFrame.on("loaded", () => setupFrame(parent, callFrame, room));
-    callFrame.on("left-meeting", () => cleanupFrame(callFrame));
-  }
-
-  function setupFrame(parent, callFrame, room) {
-    parent.scrollIntoView({ behavior: "smooth" });
-    callFrame.__intervalId = setInterval(() => newStat(callFrame, room), 2000);
-  }
-
-  function cleanupFrame(callFrame) {
-    callFrame.destroy();
-    clearInterval(callFrame.__intervalId);
-  }
-
-  function newStat(callFrame, room) {
-    callFrame.getNetworkStats().then(stat => fetch(window.API + "/stats", {
-      method: "POST",
-      body: JSON.stringify({ stat, url: room.url }),
-    }));
+      .then(room => window.location.href = "/call?url=" + encodeURIComponent(room.url));
   }
 </script>

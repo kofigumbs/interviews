@@ -9,32 +9,18 @@
   <script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
   <script crossorigin src="https://unpkg.com/d3"></script>
   <script crossorigin src="https://unpkg.com/tufte"></script>
+  <script>window.API = "{{ site.env['15SECONDLY_API'] }}"</script>
 
   <style>
-    /* RESET */
-    html, body {
+    html {
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     }
     body {
-      font-size: 16px;
-    }
-    input, button {
-      font-size: 1rem;
-    }
-
-    /* APP LAYOUT
-       Mostly styling with id's for now — will update to classes if things get crazy.
-     */
-    main {
-      max-width: 980px;
       margin: 0 auto;
       padding: 20px;
-    }
-    #frame:not(:empty) {
-      width: 100%;
-      height: 100vh;
+      max-width: 720px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     }
   </style>
 </head>

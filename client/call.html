@@ -1,0 +1,78 @@
+---
+layout: default
+---
+
+<style>
+  input, button {
+    font-size: 1rem;
+    margin: 20px 0;
+  }
+
+  main  {
+    position: relative;
+    width: 100%;
+    padding: 0;
+
+    /* This creates a responsive element with a fixed aspect ratio, here 1:1.
+       It works because padding uses the same units as width.
+     */
+    height: 0;
+    padding-bottom: 100%;
+  }
+
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+<input id="url" readonly>
+<button id="copy">Copy Link</button>
+<main>
+  <iframe id="frame" allow="microphone; camera; autoplay" frameborder="0"></iframe>
+</main>
+
+<script>
+  const url = new URLSearchParams(location.search).get("url");
+  setupLink(url);
+  setupCall(url);
+
+  function setupLink(url) {
+    const input = document.getElementById("url")
+    input.value = url;
+    document.getElementById("copy").addEventListener("click", function() {
+      input.select();
+      document.execCommand("copy");
+    });
+  }
+
+  function setupCall(url) {
+    const frame = document.getElementById("frame");
+    const callFrame = window.DailyIframe.wrap(frame, {
+      showLeaveButton: true,
+      showFullscreenButton: true,
+    });
+    callFrame.join({ url });
+    callFrame.on("loaded", () => onLoaded(url, callFrame));
+    callFrame.on("left-meeting", onLeftMeeting);
+  }
+
+  function onLoaded(url, callFrame) {
+    setInterval(() => newStat(url, callFrame), 2000);
+  }
+
+  function onLeftMeeting() {
+    // Go to the dashboard
+    window.location.href = "/";
+  }
+
+  function newStat(url, callFrame) {
+    callFrame.getNetworkStats().then(stat => fetch(window.API + "/stats", {
+      method: "POST",
+      body: JSON.stringify({ stat, url }),
+    }));
+  }
+</script>
