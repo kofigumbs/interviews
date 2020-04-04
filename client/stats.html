@@ -22,13 +22,15 @@ layout: default
 </main>
 
 <script>
+  {% include shared.js %}
+
   const params = new URLSearchParams(location.search);
   fetch(window.API + "/rooms/" + params.get("room"))
     .then(response => response.json())
     .then(viewPlots);
 
   function viewPlots(room) {
-    document.getElementById("date").innerText = parseMoment(room.created_at).calendar();
+    document.getElementById("date").innerText = timeFormat.forHumans(room.created_at);
     for (const figure of document.querySelectorAll("figure")) {
       new tufte.LinePlot(
         /* Container element ID */
@@ -36,18 +38,10 @@ layout: default
 
         /* Data points: X is time, Y is the current stat */
         room.stats.map(stat => ({
-          x: seconds(stat.recorded_at) - seconds(room.stats[0].recorded_at),
+          x: timeFormat.inSeconds(stat.recorded_at) - timeFormat.inSeconds(room.stats[0].recorded_at),
           y: stat[figure.id],
         })),
       );
     }
-  }
-
-  function seconds(timestamp) {
-    return Math.round(parseMoment(timestamp).valueOf() / 1000);
-  }
-
-  function parseMoment(timestamp) {
-    return moment(timestamp, "YYYY-MM-DD hh:mm:ss ZZZZ");
   }
 </script>
