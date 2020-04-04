@@ -1,6 +1,6 @@
 # Only using PHONY targets, so this is just a glorified script runner
 # with the benefit of being ubiquitously installed.
-.PHONY: dev server client
+.PHONY: dev client server
 
 # START DEV SERVERS
 #

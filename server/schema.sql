@@ -1,3 +1,8 @@
+-- This script is idempodent, meaning it can safely be run repeatedly.
+-- It's a nice tradeoff for small projects: maintain a slightly more verbose
+-- schema file in exchange for not having to deal with migrations. We also have
+-- a harder-than-normal time renaming stuff, but that's OK for now.
+
 -- Flags to make this script a good citizen when run from the command line
 \set ON_ERROR_STOP ON
 \set QUIET TRUE

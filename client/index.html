@@ -20,12 +20,18 @@ button {
   setupRooms();
   document.getElementById("create").addEventListener("click", newRoom);
 
+  /* Get basic info for each room
+   */
   function setupRooms() {
     fetch(window.API + "/rooms", { method: "GET" })
       .then(response => response.json())
       .then(viewRooms);
   }
 
+  /* Create a link to each room's stats
+   *
+   *   array: [{ id: Number, url: String }]
+   */
   function viewRooms(array) {
     const parent = document.getElementById("rooms");
     for (const room of array) {
@@ -38,12 +44,21 @@ button {
     }
   }
 
+  /* Create a new room and navigate to it
+   */
   function newRoom() {
     fetch(window.API + "/rooms", { method: "POST" })
       .then(response => response.json())
       .then(room => window.location.href = link("/call", { id: room.id, url: btoa(room.url) }));
   }
 
+  /* Create a relative link with query params
+   *
+   *   path: String
+   *   query: Object { String: String }
+   *
+   * Returns: String
+   */
   function link(path, query) {
     const params = new URLSearchParams();
     for (const [ key, value ] of Object.entries(query))

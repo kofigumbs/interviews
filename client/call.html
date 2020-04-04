@@ -54,6 +54,10 @@ layout: default
   setupCopy();
   setupFrame();
 
+  /* Setup "Copy Link" function
+   *
+   *   Based on <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Interact_with_the_clipboard#Using_execCommand()>
+   */
   function setupCopy() {
     const input = document.getElementById("url");
     input.value = window.location.href;
@@ -63,27 +67,64 @@ layout: default
     });
   }
 
+  /* Setup Daily.co call frame
+   *
+   *   This depends on correct values passed in query params,
+   *   so this function first checks that ?id and ?url are present.
+   *   If not, we display an error message in the frame.
+   */
   function setupFrame() {
-    const params = new URLSearchParams(location.search);
     const frame = document.getElementById("frame");
-    const callFrame = window.DailyIframe.wrap(frame, {
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.has("url") && params.has("id"))
+        setupCall(frame, params)
+      else
+        viewError(frame);
+    } catch {
+        viewError(frame);
+    }
+  }
+
+  /* Join call with Daily.co SDK and setup event listeners
+   *
+   *   frame: Element
+   *   params: URLSearchParams
+   */
+  function setupFrame(frame, params) {
+    const call = window.DailyIframe.wrap(frame, {
       showLeaveButton: true,
       showFullscreenButton: true,
     });
-    callFrame.join({ url: atob(params.get("url")) });
-    callFrame.on("loaded", () => onLoaded(params.get("id"), callFrame));
-    callFrame.on("left-meeting", onLeftMeeting);
+    call.join({ url: atob(params.get("url")) });
+    call.on("loaded", () => onLoaded(params.get("id"), call));
+    call.on("left-meeting", onLeftMeeting);
   }
 
+  /* Record stats at 2s granularity
+   *
+   *   The spec only cares about 15s granularity, but we're taking the stats
+   *   as often as they refresh. It's easier to get rid of the extra datapoints
+   *   when we don't need them than to recreate them if we do.
+   *
+   *   id: Number
+   *   callFrame: DailyIframe <https://docs.daily.co/reference#the-dailyiframe-class>
+   */
   function onLoaded(id, callFrame) {
     setInterval(() => newStat(id, callFrame), 2000);
   }
 
+  /* Go to the dashboard when meeting is left
+   */
   function onLeftMeeting() {
-    // Go to the dashboard
     window.location.href = "/";
   }
 
+  /* Record stat via API
+   *
+   *   id: Number
+   *   callFrame: DailyIframe <https://docs.daily.co/reference#the-dailyiframe-class>
+   */
   function newStat(id, callFrame) {
     const route = window.API + "/rooms/" + id + "/stat";
     callFrame.getNetworkStats().then(data => fetch(route, {
@@ -92,6 +133,10 @@ layout: default
     }));
   }
 
+  /* Format stat for API
+   *
+   *   stat: Object <https://docs.daily.co/reference#%EF%B8%8F-getnetworkstats>
+   */
   function formatStat(stat) {
     return {
       recorded_at: moment(stat.timestamp).format(), // ISO 8601

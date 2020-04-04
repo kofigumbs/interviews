@@ -24,11 +24,31 @@ layout: default
 <script>
   {% include shared.js %}
 
+  /* Get stats for each room
+   */
   const params = new URLSearchParams(location.search);
   fetch(window.API + "/rooms/" + params.get("room"))
     .then(response => response.json())
-    .then(viewPlots);
+    .then(setupPlots);
 
+  /* Setup our plots
+   *
+   * In some cases, we may not have enough any data points for a particular
+   * stat (if they left the call quickly). In those scenarios, show an error message.
+   */
+  function setupPlots(room) {
+    try {
+      if (room && room.stats.length)
+        viewPlots(room);
+      else
+        viewError(document.body);
+    } catch {
+      viewError(document.body);
+    }
+  }
+
+  /* View plots with tufte.js
+  */
   function viewPlots(room) {
     document.getElementById("date").innerText = timeFormat.forHumans(room.created_at);
     for (const figure of document.querySelectorAll("figure")) {
