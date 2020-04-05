@@ -4,6 +4,7 @@
 
 [build.environment]
   RUBY_VERSION   = "2.6.5"
+  BUNDLER_FLAGS  = "--without=server"
   15SECONDLY_API = "https://fifteensecondly.herokuapp.com"
 
 [[redirects]]
