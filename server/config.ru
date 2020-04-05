@@ -13,12 +13,14 @@ DB.extension :pg_json
 # Allow access by any method, from any origin, for any route.
 # Since we're not authenticating yet, there's no reason to be too restrictive
 # on access controls. This is true for errors as well.
-#
 ACCESS_CONTROL =  {
   "Access-Control-Allow-Origin" => "*",
   "Access-Control-Allow-Methods" => "*",
 }
-before { headers ACCESS_CONTROL }
+
+before do
+  headers ACCESS_CONTROL
+end
 
 error do
   headers ACCESS_CONTROL
