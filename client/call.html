@@ -74,20 +74,14 @@ layout: default
    *   If not, we display an error message in the frame.
    */
   function setupFrame() {
-    const frame = document.getElementById("frame");
-    try {
-      setupCall(frame, new URLSearchParams(location.search));
-    } catch {
-      viewError(frame);
-    }
+    FIFTEEN_SECONDLY.feedbackOnError(setupCall);
   }
 
   /* Join call with Daily.co SDK and setup event listeners
-   *
-   *   frame: Element
-   *   params: URLSearchParams
    */
-  function setupCall(frame, params) {
+  function setupCall() {
+    const frame = document.getElementById("frame");
+    const params = new URLSearchParams(location.search);
     const callFrame = window.DailyIframe.wrap(frame, {
       showLeaveButton: true,
       showFullscreenButton: true,
@@ -95,7 +89,7 @@ layout: default
     callFrame.join({ url: atob(params.get("url")) });
     callFrame.on("loaded", () => onLoaded(params.get("id"), callFrame));
     callFrame.on("left-meeting", onLeftMeeting);
-    callFrame.on("error", () => viewError(frame));
+    callFrame.on("error", FIFTEEN_SECONDLY.viewError);
   }
 
   /* Record stats at 15s granularity
@@ -123,11 +117,17 @@ layout: default
    *   callFrame: DailyIframe <https://docs.daily.co/reference#the-dailyiframe-class>
    */
   function newStat(id, callFrame) {
-    const route = window.API + "/rooms/" + id + "/stat";
-    callFrame.getNetworkStats().then(data => fetch(route, {
-      method: "POST",
-      body: JSON.stringify(formatStat(data.stats.latest, callFrame.participants())),
-    }));
+    callFrame.getNetworkStats()
+      .then(data => fetch(FIFTEEN_SECONDLY.API + "/rooms/" + id + "/stat", {
+        method: "POST",
+        body: JSON.stringify(formatStat(data.stats.latest, callFrame.participants())),
+      }))
+      .catch(() => {
+        // This call seems to fail for the first attempts in a new call.
+        // When that happens, we'll just retry on the next animation frame.
+        // Any true errors in the call are handled by the .on("error") listener.
+        requestAnimationFrame(() => newStat(id, callFrame));
+      });
   }
 
   /* Format stat for API

@@ -23,9 +23,10 @@ layout: default
   /* Get stats for each room
    */
   const params = new URLSearchParams(location.search);
-  fetch(window.API + "/rooms/" + params.get("room"))
+  fetch(FIFTEEN_SECONDLY.API + "/rooms/" + params.get("room"))
     .then(response => response.json())
-    .then(setupPlots);
+    .then(setupPlots)
+    .catch(FIFTEEN_SECONDLY.viewError);
 
   /* Setup our plots
    *
@@ -54,25 +55,20 @@ layout: default
    *   }
    */
   function setupPlots(data) {
-    const stats = document.getElementById("stats");
-    try {
-      viewDetails(data, stats);
-    } catch (e) {
-      console.log(e);
-      viewError(stats);
-    }
+    FIFTEEN_SECONDLY.feedbackOnError(() => viewDetails(data));
   }
 
-  /* Add details for each user to stats
+  /* Add details for each user
    *
    *   data: See #setupPlots
-   *   stats: Element
    */
-  function viewDetails(data, stats) {
+  function viewDetails(data) {
     // Finish the dangling sentence in the <h1>
-    document.getElementById("date").innerText = timeFormat.forHumans(data.room.created_at);
+    document.getElementById("date").innerText =
+      FIFTEEN_SECONDLY.timeFormat.forHumans(data.room.created_at);
 
     // Create dropdowns that expand to the plots
+    const stats = document.getElementById("stats");
     for (const user of data.users) {
       const details = document.createElement("details");
       const summary = document.createElement("summary");
@@ -106,7 +102,7 @@ layout: default
       details.appendChild(p);
 
       const figure = document.createElement("figure");
-      figure.id = user.id + y;
+      figure.id = y+ user.id;
       details.appendChild(figure);
       details.addEventListener(
         "toggle", () => viewTufte(y, figure.id, user.stats), { once: true });
@@ -123,14 +119,14 @@ layout: default
    */
   function viewTufte(y, id, stats) {
     // To graph "seconds into call" we need to track the first record
-    const firstRecordedStat = timeFormat.inSeconds(stats[0].recorded_at);
+    const firstRecord = FIFTEEN_SECONDLY.timeFormat.inSeconds(stats[0].recorded_at);
     new tufte.LinePlot(
       /* Container element ID */
       "#" + id,
 
       /* Data points: X is time, Y is the current stat */
       stats.map(stat => ({
-        x: timeFormat.inSeconds(stat.recorded_at) - firstRecordedStat,
+        x: FIFTEEN_SECONDLY.timeFormat.inSeconds(stat.recorded_at) - firstRecord,
         y: stat[y],
       })),
     );
