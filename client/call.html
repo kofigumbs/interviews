@@ -76,13 +76,9 @@ layout: default
   function setupFrame() {
     const frame = document.getElementById("frame");
     try {
-      const params = new URLSearchParams(location.search);
-      if (params.has("url") && params.has("id"))
-        setupCall(frame, params)
-      else
-        viewError(frame);
+      setupCall(frame, new URLSearchParams(location.search));
     } catch {
-        viewError(frame);
+      viewError(frame);
     }
   }
 
@@ -91,14 +87,15 @@ layout: default
    *   frame: Element
    *   params: URLSearchParams
    */
-  function setupFrame(frame, params) {
-    const call = window.DailyIframe.wrap(frame, {
+  function setupCall(frame, params) {
+    const callFrame = window.DailyIframe.wrap(frame, {
       showLeaveButton: true,
       showFullscreenButton: true,
     });
-    call.join({ url: atob(params.get("url")) });
-    call.on("loaded", () => onLoaded(params.get("id"), call));
-    call.on("left-meeting", onLeftMeeting);
+    callFrame.join({ url: atob(params.get("url")) });
+    callFrame.on("loaded", () => onLoaded(params.get("id"), callFrame));
+    callFrame.on("left-meeting", onLeftMeeting);
+    callFrame.on("error", () => viewError(frame));
   }
 
   /* Record stats at 2s granularity
@@ -129,16 +126,18 @@ layout: default
     const route = window.API + "/rooms/" + id + "/stat";
     callFrame.getNetworkStats().then(data => fetch(route, {
       method: "POST",
-      body: JSON.stringify(formatStat(data.stats.latest)),
+      body: JSON.stringify(formatStat(data.stats.latest, callFrame.participants())),
     }));
   }
 
   /* Format stat for API
    *
    *   stat: Object <https://docs.daily.co/reference#%EF%B8%8F-getnetworkstats>
+   *   participants: Object <https://docs.daily.co/reference#%EF%B8%8F-participants>
    */
-  function formatStat(stat) {
+  function formatStat(stat, participants) {
     return {
+      user_id: participants.local.user_id,
       recorded_at: moment(stat.timestamp).format(), // ISO 8601
       video_recv_bits_per_second: stat.videoRecvBitsPerSecond,
       video_recv_packet_loss: stat.videoRecvPacketLoss,

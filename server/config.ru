@@ -7,7 +7,7 @@ DAILY = Daily.new ENV.fetch("DAILY_API_KEY")
 
 # Initialize Postgres database with our schema
 DB = Sequel.connect ENV.fetch("DATABASE_URL")
-DB[File.read File.join(__dir__, "schema.sql")]
+DB.run File.read(File.join(__dir__, "schema.sql"))
 DB.extension :pg_json
 
 # Allow access by any method, from any origin, for any route.
@@ -63,30 +63,36 @@ end
 #   room_id: Int
 #
 #   {
-#     id: Int,
-#     name: String,
-#     url: String,
-#     created_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
-#     stats: [{
+#     room: {
 #       id: Int,
-#       room_id: Int,
-#       video_recv_bits_per_second: Int,
-#       video_recv_packet_loss: Int,
-#       video_send_bits_per_second: Int,
-#       video_send_packet_loss: Int,
-#       recorded_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
+#       name: String,
+#       url: String,
+#       created_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
+#     },
+#     users: [{
+#       id: String,
+#       stats: [{
+#         room_id: Int,
+#         user_id: String,
+#         video_recv_bits_per_second: Int,
+#         video_recv_packet_loss: Int,
+#         video_send_bits_per_second: Int,
+#         video_send_packet_loss: Int,
+#         recorded_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
+#       }]
 #     }]
 #   }
 get("/rooms/:room_id") do
-  DB[:rooms]
-    .join(:stats, room_id: :id)
-    .select(
-      Sequel[:rooms][:id],
-      Sequel[:rooms][:created_at],
-      Sequel.lit("COALESCE(JSON_AGG(stats.*), '[]') AS stats"))
-    .where(Sequel[:rooms][:id] => params.fetch(:room_id))
-    .group(Sequel[:rooms][:id])
-    .first.to_json
+  {
+    room: DB[:rooms][id: params[:room_id]],
+    users: DB[:stats]
+      .select(
+        Sequel.lit("user_id AS id"),
+        Sequel.lit("COALESCE(JSON_AGG(stats.*), '[]') AS stats"))
+      .where(room_id: params[:room_id])
+      .group(:user_id)
+      .to_a
+  }.to_json
 end
 
 # Record a new Stat

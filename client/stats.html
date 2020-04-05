@@ -3,22 +3,18 @@ layout: default
 ---
 
 <style>
+  details summary {
+    cursor: pointer;
+  }
   figure {
-    overflow: scroll; /* Tufte.js sizes to container, but is not responsive */
+    overflow: scroll; /* tufte.js sizes to container, but is not responsive */
   }
 </style>
 
 <main>
   {% include back.html %}
   <h1>Stats from <em id="date"></em></h1>
-  <p><code>video_recv_bits_per_second</code> / seconds into call</p>
-  <figure id="video_recv_bits_per_second"></figure>
-  <p><code>video_send_bits_per_second</code> / seconds into call</p>
-  <figure id="video_send_bits_per_second"></figure>
-  <p><code>video_recv_packet_loss</code> / seconds into call</p>
-  <figure id="video_recv_packet_loss"></figure>
-  <p><code>video_send_packet_loss</code> / seconds into call</p>
-  <figure id="video_send_packet_loss"></figure>
+  <div id="stats"></div>
 </main>
 
 <script>
@@ -35,33 +31,108 @@ layout: default
    *
    * In some cases, we may not have enough any data points for a particular
    * stat (if they left the call quickly). In those scenarios, show an error message.
+   *
+   *   data: {
+   *     room: {
+   *       id: Int,
+   *       name: String,
+   *       url: String,
+   *       created_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
+   *     },
+   *     users: [{
+   *       id: String,
+   *       stats: [{
+   *         room_id: Int,
+   *         user_id: String,
+   *         video_recv_bits_per_second: Int,
+   *         video_recv_packet_loss: Int,
+   *         video_send_bits_per_second: Int,
+   *         video_send_packet_loss: Int,
+   *         recorded_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
+   *       }]
+   *     }]
+   *   }
    */
-  function setupPlots(room) {
+  function setupPlots(data) {
+    const stats = document.getElementById("stats");
     try {
-      if (room && room.stats.length)
-        viewPlots(room);
-      else
-        viewError(document.body);
-    } catch {
-      viewError(document.body);
+      viewDetails(data, stats);
+    } catch (e) {
+      console.log(e);
+      viewError(stats);
     }
   }
 
-  /* View plots with tufte.js
-  */
-  function viewPlots(room) {
-    document.getElementById("date").innerText = timeFormat.forHumans(room.created_at);
-    for (const figure of document.querySelectorAll("figure")) {
-      new tufte.LinePlot(
-        /* Container element ID */
-        "#" + figure.id,
+  /* Add details for each user to stats
+   *
+   *   data: See #setupPlots
+   *   stats: Element
+   */
+  function viewDetails(data, stats) {
+    // Finish the dangling sentence in the <h1>
+    document.getElementById("date").innerText = timeFormat.forHumans(data.room.created_at);
 
-        /* Data points: X is time, Y is the current stat */
-        room.stats.map(stat => ({
-          x: timeFormat.inSeconds(stat.recorded_at) - timeFormat.inSeconds(room.stats[0].recorded_at),
-          y: stat[figure.id],
-        })),
-      );
+    // Create dropdowns that expand to the plots
+    for (const user of data.users) {
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.innerHTML = "User <code>" + user.id + "</code>";
+      details.appendChild(summary);
+      stats.appendChild(details);
+      viewPlots(user, details);
     }
+  }
+
+  /* Add tufte.js plots to details
+   *
+   * Because tufte.js only measures the container once, we do this lazily:
+   * on the <details> toggle event.
+   *
+   *   user: See users[] in #setupPlots
+   *   details: Element
+   *
+   * Returns Element
+   */
+  function viewPlots(user, details) {
+    const plots = [
+      "video_recv_bits_per_second",
+      "video_send_bits_per_second",
+      "video_recv_packet_loss",
+      "video_send_packet_loss",
+    ];
+    for (const y of plots) {
+      const p = document.createElement("p");
+      p.innerHTML = "<code>" + y + "</code> / seconds into call";
+      details.appendChild(p);
+
+      const figure = document.createElement("figure");
+      figure.id = user.id + y;
+      details.appendChild(figure);
+      details.addEventListener(
+        "toggle", () => viewTufte(y, figure.id, user.stats), { once: true });
+    }
+  }
+
+  /* Embed tufte.js plot
+   *
+   *   y: String, name of the stat field we're plotting
+   *   id: String
+   *   stats: See users[] in #setupPlots
+   *
+   * Returns Element
+   */
+  function viewTufte(y, id, stats) {
+    // To graph "seconds into call" we need to track the first record
+    const firstRecordedStat = timeFormat.inSeconds(stats[0].recorded_at);
+    new tufte.LinePlot(
+      /* Container element ID */
+      "#" + id,
+
+      /* Data points: X is time, Y is the current stat */
+      stats.map(stat => ({
+        x: timeFormat.inSeconds(stat.recorded_at) - firstRecordedStat,
+        y: stat[y],
+      })),
+    );
   }
 </script>
