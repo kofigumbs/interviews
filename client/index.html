@@ -49,7 +49,8 @@ button {
   function newRoom() {
     fetch(FIFTEEN_SECONDLY.API + "/rooms", { method: "POST" })
       .then(response => response.json())
-      .then(room => window.location.href = link("/call", { id: room.id, url: btoa(room.url) }));
+      .then(room => window.location.href = link("/call", { id: room.id, url: btoa(room.url) }))
+      .catch(FIFTEEN_SECONDLY.viewError);
   }
 
   /* Create a relative link with query params

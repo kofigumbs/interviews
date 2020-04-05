@@ -45,6 +45,6 @@ window.FIFTEEN_SECONDLY = {
       document.body.prepend(strong);
     }
     strong.title = e.toString();
-    strong.scollIntoView();
+    strong.scrollIntoView();
   },
 };

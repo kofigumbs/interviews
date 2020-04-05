@@ -6,9 +6,6 @@ layout: default
   details summary {
     cursor: pointer;
   }
-  figure {
-    overflow: scroll; /* tufte.js sizes to container, but is not responsive */
-  }
 </style>
 
 <main>
@@ -29,9 +26,6 @@ layout: default
     .catch(FIFTEEN_SECONDLY.viewError);
 
   /* Setup our plots
-   *
-   * In some cases, we may not have enough any data points for a particular
-   * stat (if they left the call quickly). In those scenarios, show an error message.
    *
    *   data: {
    *     room: {
@@ -67,6 +61,11 @@ layout: default
     document.getElementById("date").innerText =
       FIFTEEN_SECONDLY.timeFormat.forHumans(data.room.created_at);
 
+    // In some cases, we may not have enough any stats (if someone created then
+    // left the call quickly). In those scenarios, show an error message.
+    if (data.users.length === 0)
+      return FIFTEEN_SECONDLY.viewError("Short call without stats");
+
     // Create dropdowns that expand to the plots
     const stats = document.getElementById("stats");
     for (const user of data.users) {
@@ -79,10 +78,7 @@ layout: default
     }
   }
 
-  /* Add tufte.js plots to details
-   *
-   * Because tufte.js only measures the container once, we do this lazily:
-   * on the <details> toggle event.
+  /* Add Plotly plots to details
    *
    *   user: See users[] in #setupPlots
    *   details: Element
@@ -97,38 +93,18 @@ layout: default
       "video_send_packet_loss",
     ];
     for (const y of plots) {
-      const p = document.createElement("p");
-      p.innerHTML = "<code>" + y + "</code> / seconds into call";
-      details.appendChild(p);
-
+      // Create plot container
       const figure = document.createElement("figure");
-      figure.id = y+ user.id;
+      figure.id = y + user.id;
       details.appendChild(figure);
-      details.addEventListener(
-        "toggle", () => viewTufte(y, figure.id, user.stats), { once: true });
+
+      // Create data points: X is time, Y is the current stat
+      const trace = { type: "scatter", x: [], y: [] };
+      for (const stat of user.stats) {
+        trace.x.push(stat.recorded_at);
+        trace.y.push(stat[y]);
+      }
+      Plotly.newPlot(figure.id, [ trace ], { title: y }, { responsive: true });
     }
-  }
-
-  /* Embed tufte.js plot
-   *
-   *   y: String, name of the stat field we're plotting
-   *   id: String
-   *   stats: See users[] in #setupPlots
-   *
-   * Returns Element
-   */
-  function viewTufte(y, id, stats) {
-    // To graph "seconds into call" we need to track the first record
-    const firstRecord = FIFTEEN_SECONDLY.timeFormat.inSeconds(stats[0].recorded_at);
-    new tufte.LinePlot(
-      /* Container element ID */
-      "#" + id,
-
-      /* Data points: X is time, Y is the current stat */
-      stats.map(stat => ({
-        x: FIFTEEN_SECONDLY.timeFormat.inSeconds(stat.recorded_at) - firstRecord,
-        y: stat[y],
-      })),
-    );
   }
 </script>

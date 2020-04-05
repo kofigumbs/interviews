@@ -57,7 +57,7 @@ post("/rooms") do
   DB[:rooms].returning.insert(room).first.to_json
 end
 
-# Returns a Room object and its Stats
+# Returns a Room object and its Stats ordered by time recorded
 #
 # Path param:
 #   room_id: Int
@@ -88,7 +88,7 @@ get("/rooms/:room_id") do
     users: DB[:stats]
       .select(
         Sequel.lit("user_id AS id"),
-        Sequel.lit("COALESCE(JSON_AGG(stats.*), '[]') AS stats"))
+        Sequel.lit("COALESCE(JSON_AGG(stats.* ORDER BY recorded_at), '[]') AS stats"))
       .where(room_id: params[:room_id])
       .group(:user_id)
       .to_a
