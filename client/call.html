@@ -98,17 +98,17 @@ layout: default
     callFrame.on("error", () => viewError(frame));
   }
 
-  /* Record stats at 2s granularity
+  /* Record stats at 15s granularity
    *
-   *   The spec only cares about 15s granularity, but we're taking the stats
-   *   as often as they refresh. It's easier to get rid of the extra datapoints
-   *   when we don't need them than to recreate them if we do.
+   *   Ideally, we would record at the highest granularity (2s) and then
+   *   interpolate the lower resolution when viewing. In the interest of time,
+   *   however, we'll just record at the view resolution .
    *
    *   id: Number
    *   callFrame: DailyIframe <https://docs.daily.co/reference#the-dailyiframe-class>
    */
   function onLoaded(id, callFrame) {
-    setInterval(() => newStat(id, callFrame), 2000);
+    setInterval(() => newStat(id, callFrame), 15000);
   }
 
   /* Go to the dashboard when meeting is left
