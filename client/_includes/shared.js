@@ -7,20 +7,15 @@ window.FIFTEEN_SECONDLY = {
   API: "{{ site.env['15SECONDLY_API'] }}",
 
 
-  /* Moment.js IIFE wrapper
+  /* Moment.js wrapper
    *
-   *   timeFormat : {
-   *     forHumans : (timestamp: String) => String
-   *     inSeconds : (timestamp: String) => Number
-   *   }
+   *   timestamp: String
+   *
+   * Returns: String
    */
-  timeFormat: (function() {
-    const parse = timestamp => moment(timestamp, "YYYY-MM-DD hh:mm:ss ZZZZ");
-    return {
-      forHumans: timestamp => parse(timestamp).calendar(),
-      inSeconds: timestamp => Math.round(parse(timestamp).valueOf() / 1000),
-    }
-  })(),
+  timeFormat: function(timestamp) {
+    return moment(timestamp, "YYYY-MM-DD hh:mm:ss ZZZZ").calendar();
+  },
 
   /* Listen for errors that may be thrown and report them
    */
