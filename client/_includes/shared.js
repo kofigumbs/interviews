@@ -13,7 +13,7 @@ window.FIFTEEN_SECONDLY = {
    *
    * Returns: String
    */
-  timeFormat: function(timestamp) {
+  formatTime: function(timestamp) {
     return moment(timestamp, "YYYY-MM-DD hh:mm:ss ZZZZ").calendar();
   },
 

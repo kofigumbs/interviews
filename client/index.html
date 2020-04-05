@@ -38,7 +38,7 @@ button {
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = link("/stats", { room: room.id });
-      a.innerText = FIFTEEN_SECONDLY.timeFormat(room.created_at);
+      a.innerText = FIFTEEN_SECONDLY.formatTime(room.created_at);
       li.appendChild(a);
       parent.appendChild(li);
     }

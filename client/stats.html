@@ -59,7 +59,7 @@ layout: default
   function viewDetails(data) {
     // Finish the dangling sentence in the <h1>
     document.getElementById("date").innerText =
-      FIFTEEN_SECONDLY.timeFormat(data.room.created_at);
+      FIFTEEN_SECONDLY.formatTime(data.room.created_at);
 
     // In some cases, we may not have enough any stats (if someone created then
     // left the call quickly). In those scenarios, show an error message.
