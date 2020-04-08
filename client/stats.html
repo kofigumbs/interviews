@@ -3,15 +3,15 @@ layout: default
 ---
 
 <style>
-  details summary {
-    cursor: pointer;
-  }
 </style>
 
 <main>
   {% include back.html %}
   <h1>Stats from <em id="date"></em></h1>
-  <div id="stats"></div>
+  <figure id="video_recv_bits_per_second"></figure>
+  <figure id="video_send_bits_per_second"></figure>
+  <figure id="video_recv_packet_loss"></figure>
+  <figure id="video_send_packet_loss"></figure>
 </main>
 
 <script>
@@ -66,45 +66,24 @@ layout: default
     if (data.users.length === 0)
       return FIFTEEN_SECONDLY.viewError("Short call without stats");
 
-    // Create dropdowns that expand to the plots
-    const stats = document.getElementById("stats");
-    for (const user of data.users) {
-      const details = document.createElement("details");
-      const summary = document.createElement("summary");
-      summary.innerText = "User " + user.id;
-      details.appendChild(summary);
-      stats.appendChild(details);
-      viewPlots(user, details);
+    for (const figure of document.querySelectorAll("figure")) {
+      const traces = data.users.map(user => plotStat(figure.id, user));
+      const layout = { title: figure.id, legend: { x: 0, y: 1.15 } };
+      Plotly.newPlot(figure.id, traces, layout, { responsive: true });
     }
   }
 
-  /* Add Plotly plots to details
+  /* Add details for each user
    *
+   *   statName: String
    *   user: See users[] in #setupPlots
-   *   details: Element
-   *
-   * Returns Element
    */
-  function viewPlots(user, details) {
-    const plots = [
-      "video_recv_bits_per_second",
-      "video_send_bits_per_second",
-      "video_recv_packet_loss",
-      "video_send_packet_loss",
-    ];
-    for (const y of plots) {
-      // Create plot container
-      const figure = document.createElement("figure");
-      figure.id = y + user.id;
-      details.appendChild(figure);
-
-      // Create data points: X is time, Y is the current stat
-      const trace = { type: "scatter", x: [], y: [] };
-      for (const stat of user.stats) {
-        trace.x.push(stat.recorded_at);
-        trace.y.push(stat[y]);
-      }
-      Plotly.newPlot(figure.id, [ trace ], { title: y }, { responsive: true });
+  function plotStat(statName, user) {
+    const trace = { type: "scatter", x: [], y: [], name: "User " + user.id };
+    for (const stat of user.stats) {
+      trace.x.push(stat.recorded_at);
+      trace.y.push(stat[statName]);
     }
+    return trace;
   }
 </script>
