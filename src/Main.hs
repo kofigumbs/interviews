@@ -1,63 +1,83 @@
-import Data.Functor.Identity (Identity)
 import Data.List (intercalate)
-import Data.Text (Text)
-import Text.Parsec.Text (Parser, parseFromFile)
+import Text.Parsec.String (Parser, parseFromFile)
+import Text.ParserCombinators.Parsec.Language (emptyDef)
 
 import qualified System.Environment as Sys
 import qualified Text.Parsec as P
-import qualified Text.Parsec.Token as P
+import qualified Text.Parsec.Token as T
 
 
 main :: IO ()
-main = do
-  file <- head <$> Sys.getArgs
-  result <- parseFromFile solidStats file
-  case result of
-    Left err ->
-      print err
-
-    Right (Stats triangleCount ( minx, miny, minz ) ( maxx, maxy, maxz )) ->
-      do  putStrLn $ "Number of Triangles: " ++ show triangleCount
-          putStrLn $ "Surface Area: 1.4142"
-          putStrLn $ "Bounding Box: " ++ intercalate ", "
-            [ point minx miny minz
-            , point maxx miny minz
-            , point minx maxy minz
-            , point minx miny maxz
-            , point maxx maxy minz
-            , point maxx miny maxz
-            , point minx maxy maxz
-            , point maxx maxy maxz
-            ]
+main =
+  -- Allow multiple files to be passed and parse them in order.
+  -- In practice, I think only a single file will be passed.
+  mapM_ parseFile =<< Sys.getArgs
 
 
-point :: Double -> Double -> Double -> String
-point x y z =
-  "{x: " ++ show x ++ ", y: " ++ show y ++ ", z: " ++ show z ++ " }"
+parseFile :: String -> IO ()
+parseFile fileName =
+  do  result <- parseFromFile solidStats fileName
+      case result of
+        Left err ->
+          print err
+
+        Right stats ->
+          do  putStrLn $ "Number of Triangles: " ++ show (triangleCount stats)
+              putStrLn $ "Surface Area: " ++ calculateSurfaceArea stats
+              putStrLn $ "Bounding Box: " ++ calculateBoundingBox stats
 
 
--- STL PARSER
+calculateSurfaceArea :: Stats -> String
+calculateSurfaceArea _stats =
+  show 1.4142
 
 
+calculateBoundingBox :: Stats -> String
+calculateBoundingBox stats =
+  intercalate ", " $ show <$>
+    permuteVecs (boundingBoxMin stats) (boundingBoxMax stats)
+
+
+-- Convenience for working with 3-number sets, like vectors and coordinates
+--
+data Vec =
+  Vec Double Double Double
+
+
+instance Show Vec where
+  show (Vec x y z) =
+    "{ x: " ++ show x ++ ", y: " ++ show y ++ ", z: " ++ show z ++ " }"
+
+
+permuteVecs :: Vec -> Vec -> [Vec]
+permuteVecs (Vec ax ay az) (Vec bx by bz) =
+  -- Use the List Monad to calculate x,y,z permutations
+  Vec <$> [ ax, bx ] <*> [ ay, by ] <*> [ az, bz ]
+
+
+
+-- Parse, record, and combine metrics incrementally 
+--
 data Stats =
   Stats
-    { _stats_triangleCount :: Int
-    , _stats_boundingBoxMin :: ( Double, Double, Double )
-    , _stats_boundingBoxMax :: ( Double, Double, Double )
+    { triangleCount :: Int
+    , boundingBoxMin :: Vec
+    , boundingBoxMax :: Vec
     }
-  deriving (Show)
 
 
 instance Monoid Stats where
-  mempty = Stats 0 ( 0, 0, 0 ) ( 0, 0, 0 )
+  mempty = Stats 0 (Vec 0 0 0) (Vec 0 0 0)
+
+
 instance Semigroup Stats where
-  (<>) a b =
+  a <> b =
     Stats
-      (_stats_triangleCount a + _stats_triangleCount b)
-      (vecBy min (_stats_boundingBoxMin a) (_stats_boundingBoxMin b))
-      (vecBy max (_stats_boundingBoxMax a) (_stats_boundingBoxMax b))
+      (triangleCount a + triangleCount b)
+      (vecBy min (boundingBoxMin a) (boundingBoxMin b))
+      (vecBy max (boundingBoxMax a) (boundingBoxMax b))
     where
-      vecBy f ( ax, ay, az ) ( bx, by, bz ) = ( f ax bx, f ay by, f az bz )
+      vecBy f (Vec ax ay az) (Vec bx by bz) = Vec (f ax bx) (f ay by) (f az bz)
 
 
 solidStats :: Parser Stats
@@ -77,60 +97,40 @@ facetStats =
       v1 <- keyword "outer loop" *> vertexStats
       v2 <- vertexStats
       v3 <- vertexStats <* keyword "endloop" <* keyword "endfacet"
-      return $ (v1 <> v2 <> v3) { _stats_triangleCount = 1 }
+      return $ (v1 <> v2 <> v3) { triangleCount = 1 }
 
 
 vertexStats :: Parser Stats
 vertexStats =
   do  keyword "vertex"
       v <- vertex
-      return $ mempty { _stats_boundingBoxMin = v, _stats_boundingBoxMax = v }
+      return $ mempty { boundingBoxMin = v, boundingBoxMax = v }
 
 
-vertex :: Parser ( Double, Double, Double )
+vertex :: Parser Vec
 vertex =
-  (,,) <$> number <*> number <*> number
+  Vec <$> number <*> number <*> number
 
 
 number :: Parser Double
 number =
-  do  P.spaces
-      sign <- P.option id (negate <$ P.string "-")
-      value <- either fromIntegral id <$> P.naturalOrFloat token
-      P.spaces
-      return $ sign value
+  -- Parsec doesn't include negative number parsers by default
+  -- <https://hackage.haskell.org/package/parsec-numbers>
+  withSpaces $
+    do  sign <- P.option id (negate <$ P.string "-")
+        sign <$> either fromIntegral id <$> T.naturalOrFloat token
 
 
-keyword :: String -> Parser ()
+keyword :: String -> Parser String
 keyword name =
-  do  P.spaces
-      P.string name
-      P.spaces
+  withSpaces $ P.string name
 
 
--- This stuff doesn't matter, but needs to be here <https://github.com/haskell/parsec/issues/59>
---
--- TL;DR some of the more complex Parsec parsers (like `naturalOrFloat`)
--- require a TokenParser, but Parsec only includes definitions for String.
--- Our parser, however, is based on Text, which is more performant for UTF8.
+withSpaces :: Parser a -> Parser a
+withSpaces a =
+  P.spaces *> a <* P.spaces
 
-token :: P.GenTokenParser Text () Identity
+
+token :: T.TokenParser a
 token =
-  P.makeTokenParser languageDef
-
-
-languageDef :: P.GenLanguageDef Text st Identity
-languageDef =
-  P.LanguageDef
-    { P.identStart  = P.letter
-    , P.identLetter = P.letter
-    , P.opLetter    = P.parserZero
-    , P.opStart     = P.parserZero
-    , P.commentStart    = ""
-    , P.commentEnd      = ""
-    , P.commentLine     = ""
-    , P.nestedComments  = True
-    , P.reservedOpNames = []
-    , P.reservedNames   = []
-    , P.caseSensitive   = True
-    }
+  T.makeTokenParser emptyDef
