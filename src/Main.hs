@@ -36,18 +36,19 @@ data Solid =
 
 data Facet =
   Facet
-    { _facet_normal_x :: Double
-    , _facet_normal_y :: Double
-    , _facet_normal_z :: Double
-    , _facet_loop_1_x :: Double
-    , _facet_loop_1_y :: Double
-    , _facet_loop_1_z :: Double
-    , _facet_loop_2_x :: Double
-    , _facet_loop_2_y :: Double
-    , _facet_loop_2_z :: Double
-    , _facet_loop_3_x :: Double
-    , _facet_loop_3_y :: Double
-    , _facet_loop_3_z :: Double
+    { _facet_normal :: Vec
+    , _facet_loop_1 :: Vec
+    , _facet_loop_2 :: Vec
+    , _facet_loop_3 :: Vec
+    }
+  deriving (Show)
+
+
+data Vec =
+  Vec
+    { _vec_x :: Double
+    , _vec_y :: Double
+    , _vec_z :: Double
     }
   deriving (Show)
 
@@ -66,18 +67,15 @@ solid =
 facet :: Parser Facet
 facet =
   Facet
-    <$> (keyword "facet" *> keyword "normal" *> number)
-    <*> number
-    <*> number
-    <*> (keyword "outer loop" *> keyword "vertex" *> number)
-    <*> number
-    <*> number
-    <*> (keyword "vertex" *> number)
-    <*> number
-    <*> number
-    <*> (keyword "vertex" *> number)
-    <*> number
-    <*> (number <* keyword "endloop" <* keyword "endfacet")
+    <$> (keyword "facet" *> keyword "normal" *> vec)
+    <*> (keyword "outer loop" *> keyword "vertex" *> vec)
+    <*> (keyword "vertex" *> vec)
+    <*> (keyword "vertex" *> vec <* keyword "endloop" <* keyword "endfacet")
+
+
+vec :: Parser Vec
+vec =
+  Vec <$> number <*> number <*> number
 
 
 number :: Parser Double
