@@ -2,9 +2,9 @@ import Data.List (intercalate)
 import System.Environment (getArgs)
 import Text.Parsec.String (Parser, parseFromFile)
 import Text.ParserCombinators.Parsec.Language (emptyDef)
+import Text.Parsec.Token (makeTokenParser, naturalOrFloat)
 
 import qualified Text.Parsec as P
-import qualified Text.Parsec.Token as T
 
 
 main :: IO ()
@@ -84,7 +84,7 @@ combineVecsWith f (Vec x1 y1 z1) (Vec x2 y2 z2) =
 
 
 
--- Parse, record, and combine metrics incrementally 
+-- Parse, record, and combine metrics incrementally
 --
 -- The main nuance with the usage of this type is its implementation of
 -- Semigroup. Each time we parse a facet, we build a Stats record and combine
@@ -119,6 +119,7 @@ vecToStats vec =
   mempty { boundingBoxMin = vec, boundingBoxMax = vec }
 
 
+
 -- Parsing stuff
 --
 
@@ -126,8 +127,8 @@ vecToStats vec =
 solidStats :: Parser Stats
 solidStats =
   do  name <- keyword "solid" *> P.many1 P.letter
-      stats <- P.chainl1 facetStats (pure (<>)) -- Read as "we parse each facet
-                                                -- and combine them as we go"
+      stats <- P.chainl1 facetStats (pure (<>))
+               -- 👆 Read as "we parse each facet and combine them as we go"
       keyword "endsolid" <* keyword name <* P.eof
       return stats
 
@@ -157,13 +158,13 @@ vec =
 number :: Parser Double
 number =
   withSpaces $
-    -- Grab the optional minus sign and use it as a multiplier for the
-    -- following number or float that comes next. Either way, cast the result
-    -- to a float (Parsec calls them "floats" but uses the Double type).
     do  sign <- P.option id (negate <$ P.string "-")
-        sign <$> either fromIntegral id <$> T.naturalOrFloat token
+        sign <$> either fromIntegral id <$> naturalOrFloat token
+        -- 👆 Grab the optional minus sign and use it as a multiplier for the
+        -- following number or float that comes next. Either way, cast the result
+        -- to a float (Parsec calls them "floats" but uses the Double type).
   where
-    token = T.makeTokenParser emptyDef
+    token = makeTokenParser emptyDef
 
 
 keyword :: String -> Parser String
