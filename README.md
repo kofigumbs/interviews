@@ -38,7 +38,7 @@ sys     0m0.031s
 ### `moon.stl`
 
 ```
-$ time stack exec frostl fixtures/Moon.stl
+$ time stack exec frostl fixtures/moon.stl
 Number of Triangles: 116
 Surface Area: 7.772634278919952
 Bounding Box: { x: 0.0, y: 0.0, z: 0.0 }, { x: 0.0, y: 0.0, z: 3.0 }, { x: 0.0, y: 0.35, z: 0.0 }, { x: 0.0, y: 0.35, z: 3.0 }, { x: 1.62841, y: 0.0, z: 0.0 }, { x: 1.62841, y: 0.0, z: 3.0 }, { x: 1.62841, y: 0.35, z: 0.0 }, { x: 1.62841, y: 0.35, z: 3.0 }
