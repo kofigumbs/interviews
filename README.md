@@ -1,7 +1,7 @@
 # Quick Start
 
 1. Install [Stack](https://docs.haskellstack.org/en/stable/README/): `curl -sSL https://get.haskellstack.org/ | sh`
-2. Run `stack build --exec 'frostl fixtures/Moon.stl'`
+2. Run `stack build --exec 'frostl fixtures/moon.stl'`
 
 
 # Design
@@ -35,7 +35,7 @@ sys     0m0.031s
 ```
 
 
-### `Moon.stl`
+### `moon.stl`
 
 ```
 $ time stack exec frostl fixtures/Moon.stl
