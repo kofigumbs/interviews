@@ -1,0 +1,7 @@
+resolver: lts-15.7
+flags: {}
+extra-package-dbs: []
+packages:
+- .
+ghc-options:
+  "$locals": -W -Werror
