@@ -1,8 +1,8 @@
 import Data.List (intercalate)
+import System.Environment (getArgs)
 import Text.Parsec.String (Parser, parseFromFile)
 import Text.ParserCombinators.Parsec.Language (emptyDef)
 
-import qualified System.Environment as Sys
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Token as T
 
@@ -11,7 +11,7 @@ main :: IO ()
 main =
   -- Allow multiple files to be passed and parse them in order.
   -- In practice, I think only a single file will be passed.
-  mapM_ parseFile =<< Sys.getArgs
+  mapM_ parseFile =<< getArgs
 
 
 parseFile :: String -> IO ()
@@ -23,19 +23,42 @@ parseFile fileName =
 
         Right stats ->
           do  putStrLn $ "Number of Triangles: " ++ show (triangleCount stats)
-              putStrLn $ "Surface Area: " ++ calculateSurfaceArea stats
-              putStrLn $ "Bounding Box: " ++ calculateBoundingBox stats
+              putStrLn $ "Surface Area: " ++ show (surfaceArea stats)
+              putStrLn $ "Bounding Box: " ++ join ", " (calculateBounds stats)
 
 
-calculateSurfaceArea :: Stats -> String
-calculateSurfaceArea _stats =
-  show 1.4142
+join :: Show a => String -> [a] -> String
+join separator list =
+  intercalate separator $ show <$> list
 
 
-calculateBoundingBox :: Stats -> String
-calculateBoundingBox stats =
-  intercalate ", " $ show <$>
+
+-- Math stuff
+--
+
+
+calculateBounds :: Stats -> [Vec]
+calculateBounds stats =
     permuteVecs (boundingBoxMin stats) (boundingBoxMax stats)
+
+
+calculateTriangleArea :: Vec -> Vec -> Vec -> Double
+calculateTriangleArea v1 v2 v3 =
+  -- <https://en.wikipedia.org/wiki/Heron%27s_formula>
+  let
+    a = calculateDistance v1 v2
+    b = calculateDistance v2 v3
+    c = calculateDistance v3 v1
+    s = (a + b + c) / 2
+  in
+  sqrt $ s * (s - a) * (s - b) * (s - c)
+
+
+calculateDistance :: Vec -> Vec -> Double
+calculateDistance (Vec x1 y1 z1) (Vec x2 y2 z2) =
+  -- <https://en.wikipedia.org/wiki/Distance#Mathematics>
+  sqrt $ ((x2 - x1) ^ 2) + ((y2 - y1) ^ 2) + ((z2 - z1) ^ 2)
+
 
 
 -- Convenience for working with 3-number sets, like vectors and coordinates
@@ -50,75 +73,97 @@ instance Show Vec where
 
 
 permuteVecs :: Vec -> Vec -> [Vec]
-permuteVecs (Vec ax ay az) (Vec bx by bz) =
+permuteVecs (Vec x1 y1 z1) (Vec x2 y2 z2) =
   -- Use the List Monad to calculate x,y,z permutations
-  Vec <$> [ ax, bx ] <*> [ ay, by ] <*> [ az, bz ]
+  Vec <$> [ x1, x2 ] <*> [ y1, y2 ] <*> [ z1, z2 ]
+
+
+combineVecsWith :: (Double -> Double -> Double) -> Vec -> Vec -> Vec
+combineVecsWith f (Vec x1 y1 z1) (Vec x2 y2 z2) =
+  Vec (f x1 x2) (f y1 y2) (f z1 z2)
 
 
 
 -- Parse, record, and combine metrics incrementally 
 --
+-- The main nuance with the usage of this type is its implementation of
+-- Semigroup. Each time we parse a facet, we build a Stats record and combine
+-- it with whatever stats we've already seen. This makes it convenient to have
+-- a "zero Stats" (hence Monoid) because now we can think about Stats as
+-- building blocks.
+--
 data Stats =
   Stats
     { triangleCount :: Int
+    , surfaceArea :: Double
     , boundingBoxMin :: Vec
     , boundingBoxMax :: Vec
     }
 
 
 instance Monoid Stats where
-  mempty = Stats 0 (Vec 0 0 0) (Vec 0 0 0)
+  mempty = Stats 0 0 (Vec 0 0 0) (Vec 0 0 0)
 
 
 instance Semigroup Stats where
   a <> b =
     Stats
       (triangleCount a + triangleCount b)
-      (vecBy min (boundingBoxMin a) (boundingBoxMin b))
-      (vecBy max (boundingBoxMax a) (boundingBoxMax b))
-    where
-      vecBy f (Vec ax ay az) (Vec bx by bz) = Vec (f ax bx) (f ay by) (f az bz)
+      (surfaceArea a + surfaceArea b)
+      (combineVecsWith min (boundingBoxMin a) (boundingBoxMin b))
+      (combineVecsWith max (boundingBoxMax a) (boundingBoxMax b))
+
+
+vecToStats :: Vec -> Stats
+vecToStats vec =
+  mempty { boundingBoxMin = vec, boundingBoxMax = vec }
+
+
+-- Parsing stuff
+--
 
 
 solidStats :: Parser Stats
 solidStats =
   do  name <- keyword "solid" *> P.many1 P.letter
-      stats <- P.chainl1 facetStats (pure (<>)) -- This is very "haskell-y",
-                                                -- but also the cleanest way.
-                                                -- Read as "we chain each facet
-                                                -- and semigroup id as we go."
+      stats <- P.chainl1 facetStats (pure (<>)) -- Read as "we parse each facet
+                                                -- and combine them as we go"
       keyword "endsolid" <* keyword name <* P.eof
       return stats
 
 
 facetStats :: Parser Stats
 facetStats =
-  do  _normal <- keyword "facet" *> keyword "normal" *> vertex
-      v1 <- keyword "outer loop" *> vertexStats
-      v2 <- vertexStats
-      v3 <- vertexStats <* keyword "endloop" <* keyword "endfacet"
-      return $ (v1 <> v2 <> v3) { triangleCount = 1 }
-
-
-vertexStats :: Parser Stats
-vertexStats =
-  do  keyword "vertex"
-      v <- vertex
-      return $ mempty { boundingBoxMin = v, boundingBoxMax = v }
+  do  _normal <- keyword "facet" *> keyword "normal" *> vec
+      v1 <- keyword "outer loop" *> vertex
+      v2 <- vertex
+      v3 <- vertex <* keyword "endloop" <* keyword "endfacet"
+      return $ (vecToStats v1 <> vecToStats v2 <> vecToStats v3)
+        { triangleCount = 1
+        , surfaceArea = calculateTriangleArea v1 v2 v3
+        }
 
 
 vertex :: Parser Vec
 vertex =
+  keyword "vertex" *> vec
+
+
+vec :: Parser Vec
+vec =
   Vec <$> number <*> number <*> number
 
 
 number :: Parser Double
 number =
-  -- Parsec doesn't include negative number parsers by default
-  -- <https://hackage.haskell.org/package/parsec-numbers>
   withSpaces $
+    -- Grab the optional minus sign and use it as a multiplier for the
+    -- following number or float that comes next. Either way, cast the result
+    -- to a float (Parsec calls them "floats" but uses the Double type).
     do  sign <- P.option id (negate <$ P.string "-")
         sign <$> either fromIntegral id <$> T.naturalOrFloat token
+  where
+    token = T.makeTokenParser emptyDef
 
 
 keyword :: String -> Parser String
@@ -129,8 +174,3 @@ keyword name =
 withSpaces :: Parser a -> Parser a
 withSpaces a =
   P.spaces *> a <* P.spaces
-
-
-token :: T.TokenParser a
-token =
-  T.makeTokenParser emptyDef
