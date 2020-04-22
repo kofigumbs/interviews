@@ -1,9 +1,11 @@
 import Data.List (intercalate)
+import Data.Set (Set)
 import System.Environment (getArgs)
 import Text.Parsec.String (Parser, parseFromFile)
 import Text.ParserCombinators.Parsec.Language (emptyDef)
 import Text.Parsec.Token (makeTokenParser, naturalOrFloat)
 
+import qualified Data.Set as Set
 import qualified Text.Parsec as P
 
 
@@ -19,10 +21,11 @@ parseFile fileName =
   do  result <- parseFromFile solidStats fileName
       case result of
         Left err ->
+          -- TODO print something nicer
           print err
 
         Right stats ->
-          do  putStrLn $ "Number of Triangles: " ++ show (triangleCount stats)
+          do  putStrLn $ "Number of Triangles: " ++ show (Set.size (triangles stats))
               putStrLn $ "Surface Area: " ++ show (surfaceArea stats)
               putStrLn $ "Bounding Box: " ++ join ", " (calculateBounds stats)
 
@@ -65,6 +68,7 @@ calculateDistance (Vec x1 y1 z1) (Vec x2 y2 z2) =
 --
 data Vec =
   Vec Double Double Double
+  deriving (Eq, Ord)
 
 
 instance Show Vec where
@@ -94,7 +98,7 @@ combineVecsWith f (Vec x1 y1 z1) (Vec x2 y2 z2) =
 --
 data Stats =
   Stats
-    { triangleCount :: Int
+    { triangles :: Set Triangle
     , surfaceArea :: Double
     , boundingBoxMin :: Vec
     , boundingBoxMax :: Vec
@@ -102,13 +106,13 @@ data Stats =
 
 
 instance Monoid Stats where
-  mempty = Stats 0 0 (Vec 0 0 0) (Vec 0 0 0)
+  mempty = Stats Set.empty 0 (Vec 0 0 0) (Vec 0 0 0)
 
 
 instance Semigroup Stats where
   a <> b =
     Stats
-      (triangleCount a + triangleCount b)
+      (triangles a <> triangles b)
       (surfaceArea a + surfaceArea b)
       (combineVecsWith min (boundingBoxMin a) (boundingBoxMin b))
       (combineVecsWith max (boundingBoxMax a) (boundingBoxMax b))
@@ -119,16 +123,37 @@ vecToStats vec =
   mempty { boundingBoxMin = vec, boundingBoxMax = vec }
 
 
+data Triangle =
+  Triangle (Set Vec)
+  deriving (Eq, Ord)
+
+
+newTriangle :: Vec -> Vec -> Vec -> Triangle
+newTriangle v1 v2 v3 =
+  Triangle $ Set.fromList [ v1, v2, v3 ]
+
+
 
 -- Parsing stuff
 --
 
 
+chainStats :: Stats -> Parser Stats -> Parser Stats
+chainStats previousStats newStats =
+  P.choice
+    [ do  stats <- newStats
+          let candidateStats = stats <> previousStats
+          if triangles candidateStats == triangles previousStats
+             then P.parserFail "EXPLODE"
+             else chainStats candidateStats newStats
+    , return previousStats
+    ]
+      
+      
 solidStats :: Parser Stats
 solidStats =
   do  name <- keyword "solid" *> P.many1 P.letter
-      stats <- P.chainl1 facetStats (pure (<>))
-               -- 👆 Read as "we parse each facet and combine them as we go"
+      stats <- chainStats mempty facetStats
       keyword "endsolid" <* keyword name <* P.eof
       return stats
 
@@ -140,7 +165,7 @@ facetStats =
       v2 <- vertex
       v3 <- vertex <* keyword "endloop" <* keyword "endfacet"
       return $ (vecToStats v1 <> vecToStats v2 <> vecToStats v3)
-        { triangleCount = 1
+        { triangles = Set.singleton (newTriangle v1 v2 v3)
         , surfaceArea = calculateTriangleArea v1 v2 v3
         }
 
