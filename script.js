@@ -41,8 +41,8 @@ function viewTableBody() {
 }
 
 function renderChart() {
-  // Plotly draws lines in order of appearance in x/y arrays.
-  // We want that order to be "increasing x-axis", so we sort by that first.
+  // Plotly draws lines in order of appearance in x/y arrays. We want that
+  // order to be "increasing x-axis", so we copy the array and sort by that.
   const sorted = Array.from(data);
   sorted.sort((first, second) => first[xAxis] - second[xAxis]);
 
