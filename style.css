@@ -26,10 +26,10 @@ input {
   width: 100%;
   height: 100%;
   border: none;
+  text-align: right;
 }
 
 th, input {
-  text-align: right;
   padding: .7rem;
   box-sizing: border-box;
 }
@@ -46,7 +46,7 @@ error:empty {
   display: none;
 }
 
-@media only screen and (min-width: 45rem) {
+@media only screen and (min-width: 48rem) {
   main {
     flex-direction: row;
   }
