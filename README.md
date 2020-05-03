@@ -1,6 +1,7 @@
 **Quick-Start:**
   - Run `npm start`
   - Open <http://127.0.0.1:8081/>
+  - Update the initial dataset by modifying `src/index.html`
 
 
 # About
@@ -9,6 +10,8 @@ This app displays "abc" data as a table and a chart.
 The table is editable, and changing the value will update the chart.
 
 The architecture is very minimal—the only dependency is [Plotly](https://plotly.com/javascript/).
+I chose Plotly because many of the suggested bells and whistles are included by default.
+In fact, it seems the demo screenshot is taken from an app that also uses Plotly.
 An NPM script is included for local dev convenience, but the project is organized as plain HTML, CSS, and JS files.
 Since I forewent a JS framework, but the spec mentions "reusable components", I decided to implement a few functions that map JS objects to DOM elements.
 This gave me the opportunity to demonstrate how the design works with a component mindset, without introducing a build step or additional dependencies.
