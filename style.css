@@ -1,4 +1,4 @@
-html {
+html, input {
   font-size: 16px;
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
@@ -21,8 +21,16 @@ figure {
   width: 100%;
 }
 
-th, td {
+th, input {
   text-align: right;
+}
+
+input {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 @media only screen and (min-width: 45rem) {
@@ -37,7 +45,7 @@ th, td {
   }
 }
 
-/* Copied from <https://jgthms.com/wysiwyg.css/>
+/* Adapteed from <https://jgthms.com/wysiwyg.css/>
  * No need to include the whole stylesheet, when we only care about table styles for now
  */
 th, td { font-size: 1em; padding: .7em; border: 1px solid #e6e6e6; line-height: 1.4 }

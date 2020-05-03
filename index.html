@@ -9,6 +9,7 @@
   </head>
   <body>
     <h1>Responsive "abc" chart</h1>
+    <p><em>Edit the values to update the chart</em></p>
     <main>
       <table><thead><tr></tr></thead><tbody></tbody></table>
       <figure id="chart"></figure>
@@ -27,31 +28,47 @@
         }
 
         const tbody = document.querySelector("tbody");
-        for (const row of data) {
+        for (let index = 0; index < data.length; index++) {
+          const row = data[index];
           const tr = document.createElement("tr");
-          for (const value of Object.values(row)) {
+          for (const [ key, value ] of Object.entries(row)) {
             const td = document.createElement("td");
-            td.innerText = value;
+            const input = document.createElement("input");
+            input.dataset.index = index;
+            input.dataset.key = key;
+            input.value = value;
+            input.addEventListener("input", onDataInput);
+            td.appendChild(input);
             tr.appendChild(td);
           }
           tbody.appendChild(tr);
         }
 
-        const xAxis = "a";
-        const sorted = Array.from(data);
-        sorted.sort((first, second) => first[xAxis] - second[xAxis]);
+        plot();
 
-        const traces = [];
-        for (const yAxis of Object.keys(sorted[0])) {
-          if (yAxis === xAxis) continue;
-          const trace = { type: "scatter", x: [], y: [], name: yAxis };
-          for (const point of sorted) {
-            trace.x.push(point[xAxis]);
-            trace.y.push(point[yAxis]);
+        function plot() {
+          const xAxis = "a";
+          const sorted = Array.from(data);
+          sorted.sort((first, second) => first[xAxis] - second[xAxis]);
+
+          const traces = [];
+          for (const yAxis of Object.keys(sorted[0])) {
+            if (yAxis === xAxis) continue;
+            const trace = { type: "scatter", x: [], y: [], name: yAxis };
+            for (const point of sorted) {
+              trace.x.push(point[xAxis]);
+              trace.y.push(point[yAxis]);
+            }
+            traces.push(trace);
           }
-          traces.push(trace);
+          Plotly.newPlot("chart", traces, {}, { responsive: true });
         }
-        Plotly.newPlot("chart", traces, {}, { responsive: true });
+
+        function onDataInput(event) {
+          const input = event.target;
+          data[input.dataset.index][input.dataset.key] = input.value;
+          plot();
+        }
       </script>
     </main>
   </body>
