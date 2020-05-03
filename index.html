@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
     <title>Hello, Holocene</title>
     <link rel="stylesheet" href= "style.css"/>
+    <script>
+      // Initial data (from challenge email)
+      data = [
+        { 'a': 1, 'b': 3, 'c': 10 },
+        { 'a': 3, 'b': 20, 'c': 12 },
+        { 'a': -1, 'b': -5, 'c': -4 },
+      ];
+    </script>
     <script crossorigin src="https://unpkg.com/@nteract/plotly"></script>
+    <script crossorigin src="script.js"></script>
   </head>
   <body>
     <h1>Responsive "abc" chart</h1>
@@ -13,66 +22,6 @@
     <main>
       <table><thead><tr></tr></thead><tbody></tbody></table>
       <figure id="chart"></figure>
-      <script>
-        const data = [
-          { "a": 1, "b": 3, "c": 10 },
-          { "a": 3, "b": 20, "c": 12 },
-          { "a": -1, "b": -5, "c": -4 },
-        ];
-
-        const headerRow = document.querySelector("thead tr");
-        for (const header of Object.keys(data[0])) {
-          const th = document.createElement("th");
-          th.innerText = header;
-          headerRow.appendChild(th);
-        }
-
-        const tbody = document.querySelector("tbody");
-        for (let index = 0; index < data.length; index++) {
-          const row = data[index];
-          const tr = document.createElement("tr");
-          for (const [ key, value ] of Object.entries(row)) {
-            const td = document.createElement("td");
-            const input = document.createElement("input");
-            input.dataset.index = index;
-            input.dataset.key = key;
-            input.value = value;
-            input.addEventListener("input", onDataInput);
-            td.appendChild(input);
-            tr.appendChild(td);
-          }
-          tbody.appendChild(tr);
-        }
-
-        plot();
-
-        function plot() {
-          const xAxis = "a";
-          const sorted = Array.from(data);
-          sorted.sort((first, second) => first[xAxis] - second[xAxis]);
-
-          const traces = [];
-          for (const yAxis of Object.keys(sorted[0])) {
-            if (yAxis === xAxis) continue;
-            const trace = { type: "scatter", x: [], y: [], name: yAxis };
-            for (const point of sorted) {
-              trace.x.push(point[xAxis]);
-              trace.y.push(point[yAxis]);
-            }
-            traces.push(trace);
-          }
-          Plotly.newPlot("chart", traces, {}, { responsive: true });
-        }
-
-        function onDataInput(event) {
-          const input = event.target;
-          const value = parseFloat(input.value);
-          if (!isNaN(value)) {
-            data[input.dataset.index][input.dataset.key] = value;
-            plot();
-          }
-        }
-      </script>
     </main>
   </body>
 </html>
