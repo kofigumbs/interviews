@@ -1,8 +1,8 @@
 window.addEventListener("load", () => {
   validateSetup(() => {
-    setupTableHead();
-    setupTableBody();
-    drawChart();
+    renderInto("thead tr", viewTableHead());
+    renderInto("tbody", viewTableBody());
+    renderChart();
   });
 });
 
@@ -21,36 +21,26 @@ function validateSetup(callback) {
   try { callback() } catch (e) { showError(e.message) }
 }
 
-function setupTableHead() {
-  const tr = document.querySelector("thead tr");
-  for (const key of Object.keys(data[0])) {
-    const th = document.createElement("th");
-    th.innerText = key;
-    tr.appendChild(th);
-  }
+function viewTableHead() {
+  // Use the first data entry key names to populate the column names
+  return Object.keys(data[0]).map(key => ({ node: "th", text: key }));
 }
 
-function setupTableBody() {
-  const tbody = document.querySelector("tbody");
-  for (let index = 0; index < data.length; index++) {
-    const row = data[index];
-    const tr = document.createElement("tr");
-    for (const [ key, value ] of Object.entries(row)) {
-      const td = document.createElement("td");
-      const input = document.createElement("input");
-      input.type = "number";
-      input.dataset.index = index; // Used in `onDataInput` event handler
-      input.dataset.key = key;     // Used in `onDataInput` event handler
-      input.value = value;
-      input.addEventListener("input", onDataInput);
-      td.appendChild(input);
-      tr.appendChild(td);
-    }
-    tbody.appendChild(tr);
-  }
+function viewTableBody() {
+  return data.map((row, index) => ({
+    node: "tr",
+    children: Object.entries(row).map(pair => ({
+      node: "td",
+      children: [{
+        node: "input",
+        on: { input: onDataInput },
+        attributes: { "type": "number", "data-index": index, "data-key": pair[0], "value": pair[1] },
+      }],
+    })),
+  }));
 }
 
-function drawChart() {
+function renderChart() {
   // Plotly draws lines in order of appearance in x/y arrays.
   // We want that order to be "increasing x-axis", so we sort by that first.
   const sorted = Array.from(data);
@@ -78,6 +68,34 @@ function onDataInput(event) {
   if (!isNaN(value)) {
     // Update `data` with new input value then re-render the chart
     data[input.dataset.index][input.dataset.key] = value;
-    drawChart();
+    renderChart();
   }
+}
+
+
+/* RENDERING
+ *
+ * Very simple "virtual-dom style framework" to setup elements
+ * Requirements mentioned that the challenge should be solved with a component
+ * architecture. I think the project is too small to justify React or similar,
+ * so instead we just use JS objects to pass around our UI components.
+ */
+
+function renderInto(selector, children) {
+  renderChildren(document.querySelector(selector), children);
+}
+
+function renderChildren(parent, children) {
+  for (let child of children) {
+    const element = document.createElement(child.node);
+    element.innerText = child.text || "";
+    renderChildren(element, child.children || []);
+    eachEntry(child.on || {}, (key, value) => element.addEventListener(key, value));
+    eachEntry(child.attributes || {}, (key, value) => element.setAttribute(key, value));
+    parent.appendChild(element);
+  }
+}
+
+function eachEntry(object, callback) {
+  for (const [ key, value ] of Object.entries(object)) callback(key, value);
 }
