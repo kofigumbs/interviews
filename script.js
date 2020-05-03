@@ -13,7 +13,7 @@ function validateSetup(callback) {
   // Check global data assumptions
   if (typeof data === "undefined") return showError("No `data` variable is defined");
   if (typeof xAxis === "undefined") return showError("No `xAxis` variable is defined");
-  if (typeof Plotly === "undefined") return showError("Plotly didn't to load");
+  if (typeof Plotly === "undefined") return showError("Plotly didn't load");
   if (!data.length) return showError("`data` variable is empty, at least 1 entry required");
   if (!data.every(x => x[xAxis])) return showError("All `data` entries must include the `xAxis` key");
 
@@ -39,8 +39,8 @@ function setupTableBody() {
       const td = document.createElement("td");
       const input = document.createElement("input");
       input.type = "number";
-      input.dataset.index = index;
-      input.dataset.key = key;
+      input.dataset.index = index; // Used in `onDataInput` event handler
+      input.dataset.key = key;     // Used in `onDataInput` event handler
       input.value = value;
       input.addEventListener("input", onDataInput);
       td.appendChild(input);
@@ -76,6 +76,7 @@ function onDataInput(event) {
   // Ignore non-numeric inputs.
   // The user might be in the middle of entering/deleting something that _will be_ valid.
   if (!isNaN(value)) {
+    // Update `data` with new input value then re-render the chart
     data[input.dataset.index][input.dataset.key] = value;
     drawChart();
   }
