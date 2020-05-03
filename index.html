@@ -66,8 +66,11 @@
 
         function onDataInput(event) {
           const input = event.target;
-          data[input.dataset.index][input.dataset.key] = input.value;
-          plot();
+          const value = parseFloat(input.value);
+          if (!isNaN(value)) {
+            data[input.dataset.index][input.dataset.key] = value;
+            plot();
+          }
         }
       </script>
     </main>
