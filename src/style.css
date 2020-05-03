@@ -11,7 +11,7 @@ body {
 
 main {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: center;
   justify-content: center;
 }
@@ -49,11 +49,14 @@ error:empty {
 @media only screen and (min-width: 48rem) {
   main {
     flex-direction: row;
+    align-items: start;
   }
   table {
+    margin-top: 120px;
     width: 25%;
   }
   figure {
+    flex-order: -1;
     width: 75%;
   }
 }
