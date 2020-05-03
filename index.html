@@ -10,16 +10,35 @@
         font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
       }
 
-      body {
+      main {
+        max-width: 60rem;
+        padding: 1rem;
+        margin: 0 auto;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        flex-flow: wrap;
-        min-width: 30rem;
+      }
+
+      figure {
+        margin: 0;
+        width: 100%;
       }
 
       th, td {
         text-align: right;
+      }
+
+      @media only screen and (min-width: 45rem) {
+        main {
+          flex-direction: row;
+        }
+        table {
+          width: 25%;
+        }
+        figure {
+          width: 75%;
+        }
       }
 
       /* Copied from <https://jgthms.com/wysiwyg.css/>
@@ -32,50 +51,52 @@
     </style>
     <script crossorigin src="https://unpkg.com/@nteract/plotly"></script>
   </head>
-  <body class="wysiwyg">
-    <table><thead><tr></tr></thead><tbody></tbody></table>
-    <figure id="chart"></figure>
-    <script>
-      const data = [
-        { "a": 1, "b": 3, "c": 10 },
-        { "a": 3, "b": 20, "c": 12 },
-        { "a": -1, "b": -5, "c": -4 },
-      ];
+  <body>
+    <h1>Responsive "abc" chart</h1>
+    <main>
+      <table><thead><tr></tr></thead><tbody></tbody></table>
+      <figure id="chart"></figure>
+      <script>
+        const data = [
+          { "a": 1, "b": 3, "c": 10 },
+          { "a": 3, "b": 20, "c": 12 },
+          { "a": -1, "b": -5, "c": -4 },
+        ];
 
-      const headerRow = document.querySelector("thead tr");
-      for (const header of Object.keys(data[0])) {
-        const th = document.createElement("th");
-        th.innerText = header;
-        headerRow.appendChild(th);
-      }
-
-      const tbody = document.querySelector("tbody");
-      for (const row of data) {
-        const tr = document.createElement("tr");
-        for (const value of Object.values(row)) {
-          const td = document.createElement("td");
-          td.innerText = value;
-          tr.appendChild(td);
+        const headerRow = document.querySelector("thead tr");
+        for (const header of Object.keys(data[0])) {
+          const th = document.createElement("th");
+          th.innerText = header;
+          headerRow.appendChild(th);
         }
-        tbody.appendChild(tr);
-      }
 
-      const xAxis = "a";
-      const sorted = Array.from(data);
-      sorted.sort((first, second) => first[xAxis] - second[xAxis]);
-
-      const traces = [];
-      for (const yAxis of Object.keys(sorted[0])) {
-        if (yAxis === xAxis) continue;
-        const trace = { type: "scatter", x: [], y: [], name: yAxis };
-        for (const point of sorted) {
-          trace.x.push(point[xAxis]);
-          trace.y.push(point[yAxis]);
+        const tbody = document.querySelector("tbody");
+        for (const row of data) {
+          const tr = document.createElement("tr");
+          for (const value of Object.values(row)) {
+            const td = document.createElement("td");
+            td.innerText = value;
+            tr.appendChild(td);
+          }
+          tbody.appendChild(tr);
         }
-        traces.push(trace);
-      }
-      const layout = { legend: { x: 0, y: 1.15 } };
-      Plotly.newPlot("chart", traces, layout, { responsive: true });
-    </script>
+
+        const xAxis = "a";
+        const sorted = Array.from(data);
+        sorted.sort((first, second) => first[xAxis] - second[xAxis]);
+
+        const traces = [];
+        for (const yAxis of Object.keys(sorted[0])) {
+          if (yAxis === xAxis) continue;
+          const trace = { type: "scatter", x: [], y: [], name: yAxis };
+          for (const point of sorted) {
+            trace.x.push(point[xAxis]);
+            trace.y.push(point[yAxis]);
+          }
+          traces.push(trace);
+        }
+        Plotly.newPlot("chart", traces, {}, { responsive: true });
+      </script>
+    </main>
   </body>
 </html>
