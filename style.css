@@ -34,6 +34,18 @@ th, input {
   box-sizing: border-box;
 }
 
+error {
+  font-weight: bold;
+  background: darkred;
+  color: white;
+  padding: 1rem;
+  border-radius: 2px;
+}
+
+error:empty {
+  display: none;
+}
+
 @media only screen and (min-width: 45rem) {
   main {
     flex-direction: row;
