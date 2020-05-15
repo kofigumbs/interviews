@@ -1,7 +1,7 @@
 **Quick-Start:**
   - Run `npm start`
   - Open <http://127.0.0.1:8080/>
-  - Update the initial dataset by modifying `data.json`
+  - Update the initial dataset by modifying `src/data.json`
 
 
 # About
