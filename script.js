@@ -7,7 +7,7 @@ define("file-table", {
   render: render(
     ({ selected }) => html.resolve(
       data
-        .then(files => html`${[ viewHeader(selected, files), viewTable(selected, files) ]}`)
+        .then(files => html`${viewHeader(selected, files)}${viewTable(selected, files)}`)
         .catch(viewError),
       viewLoading()
     ),
@@ -29,10 +29,10 @@ function viewHeader(selected, files) {
       <input
         type="checkbox"
         onchange="${toggleAll(files)}"
-        checked="${selected.size !== 0}"
+        checked="${selected.size === files.length}"
         indeterminate="${selected.size > 0 && selected.size < files.length}">
-      <h2>Selected ${selected.size}</h2>
-      <button disabled="${selected.size === 0}" onclick="${download}">
+      <h2>${selected.size === 0 ? "None Selected" : "Selected " + selected.size}</h2>
+      <button disabled="${selected.size === 0}" onclick="${download(selected)}">
         <!-- https://feathericons.com/ -->
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download Selected
@@ -93,16 +93,20 @@ function toggle(file) {
 
 function toggleAll(files) {
   return (host, event) => {
-    event.preventDefault();
-    if (host.selected.size === 0)
+    if (event.target.checked)
       host.selected = new Set(files.filter(isAvailable));
     else
       host.selected = new Set();
   }
 }
 
-function download() {
-  alert("OK, pretend the files are downloaded now!");
+function download(selected) {
+  return () => {
+    alert(
+      Array.from(selected)
+        .map(file => `Device: ${file.device}\nPath:${file.path}`)
+        .join("\n\n"));
+  };
 }
 
 function isAvailable(file) {
