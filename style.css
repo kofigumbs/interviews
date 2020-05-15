@@ -1,0 +1,66 @@
+body {
+  font-size: 16px;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+  margin: 0 auto;
+  padding: 0 1rem;
+  max-width: 900px;
+}
+header {
+  padding: 2rem 0 1rem;
+}
+h2, button {
+  font-size: 1.5rem;
+}
+h2 {
+  display: inline-block;
+  margin: 0 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+button {
+  padding: .5rem 1rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+button[disabled] {
+  cursor: not-allowed;
+}
+table {
+  width: 100%;
+  border: none;
+}
+tr {
+  height: 3rem;
+}
+tr:hover {
+  background: #F5F5F5;
+}
+tr.is-active {
+  background: #EEE;
+}
+tr.is-available {
+  cursor: pointer;
+}
+tr:not(.is-available) {
+  cursor: not-allowed;
+}
+.status {
+  position: relative;
+  text-transform: capitalize;
+}
+.is-available .status:before {
+  content: '';
+  position: absolute;
+  right: 105%;
+  height: 1rem;
+  width: 1rem;
+  background: #7fd135;
+  border-radius: 50%;
+}
+.error {
+  background: darkred;
+  color: white;
+  font-weight: bold;
+  padding: 3rem;
+  display: block;
+  border-radius: 2px;
+}
