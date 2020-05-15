@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script type="module">
+      import { html, define, property } from "https://unpkg.com/hybrids@4.1.9/src";
+
+      const data = fetch("data.json").then(x => x.json());
+      define("file-table", {
+        selected: property(new Set()),
+        render: ({ selected }) => html`
+          ${html.resolve(data.then(files => html`
+          <header>
+            <h1>Selected ${selected.size}</h1>
+            <button disabled="${selected.size === 0}">↡ Download Selected</button>
+          </header>
+          <table>
+            <thead>
+              <tr>
+                <td></td>
+                <td>Name</td>
+                <td>Device</td>
+                <td>Path</td>
+                <td>Status</td>
+              </tr>
+            </thead>
+            <tbody>
+              ${files.map(file => viewTableRow(selected, file))}
+            </tbody>
+          </table>
+          `), html`Loading...`)}
+        `,
+      });
+
+      function viewTableRow(selected, file) {
+          return html`<tr onclick="${toggle(file)}">
+            <td>
+              <input
+                type="checkbox"
+                onchange="${toggle(file)}"
+                checked="${selected.has(file.path)}">
+            </td>
+            <td>${file.name}</td>
+            <td>${file.device}</td>
+            <td>${file.path}</td>
+            <td>${file.status}</td>
+          </tr>
+        `;
+      };
+
+      function toggle(file) {
+        return (host, event) => {
+          event.preventDefault();
+          host.selected = new Set(host.selected);
+          host.selected.has(file.path)
+            ? host.selected.delete(file.path)
+            : host.selected.add(file.path);
+        };
+      }
+    </script>
+  </head>
+  <body><file-table></file-table></body>
+</html>
