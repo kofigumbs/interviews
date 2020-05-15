@@ -15,16 +15,20 @@
         padding: 2rem 0 1rem;
       }
       h2, button {
-        font-size: 2rem;
+        font-size: 1.5rem;
       }
       h2 {
         display: inline-block;
-        margin-right: 3rem;
+        margin: 0 1.5rem;
         font-variant-numeric: tabular-nums;
       }
       button {
         padding: .5rem 1rem;
         border-radius: 2px;
+        cursor: pointer;
+      }
+      button[disabled] {
+        cursor: not-allowed;
       }
       table {
         width: 100%;
@@ -68,7 +72,7 @@
         selected: property(new Set()),
         render: render(
           ({ selected }) => html.resolve(
-            data.then(files => html`${[ viewHeader(selected), viewTable(selected, files) ]}`),
+            data.then(files => html`${[ viewHeader(selected, files), viewTable(selected, files) ]}`),
             viewLoading()
           ),
           { shadowRoot: false }
@@ -79,11 +83,16 @@
         return html`<p>Loading...</p>`;
       }
 
-      function viewHeader(selected) {
+      function viewHeader(selected, files) {
         return html`
           <header>
+            <input
+              type="checkbox"
+              onchange="${toggleAll(files)}"
+              checked="${selected.size !== 0}"
+              indeterminate="${selected.size > 0 && selected.size < files.length}">
             <h2>Selected ${selected.size}</h2>
-            <button disabled="${selected.size === 0}">
+            <button disabled="${selected.size === 0}" onclick="${download}">
               <!-- https://feathericons.com/ -->
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Download Selected
@@ -113,7 +122,7 @@
 
       function viewTableRow(selected, file) {
         const available = isAvailable(file);
-        const active = selected.has(file.path);
+        const active = selected.has(file);
         return html`
           <tr class="${{ "is-available": available, "is-active": active }}"
               onclick="${available && toggle(file)}">
@@ -136,10 +145,24 @@
         return (host, event) => {
           event.preventDefault();
           host.selected = new Set(host.selected); // re-assign to trigger re-render
-          host.selected.has(file.path)
-            ? host.selected.delete(file.path)
-            : host.selected.add(file.path);
+          host.selected.has(file)
+            ? host.selected.delete(file)
+            : host.selected.add(file);
         };
+      }
+
+      function toggleAll(files) {
+        return (host, event) => {
+          event.preventDefault();
+          if (host.selected.size === 0)
+            host.selected = new Set(files.filter(isAvailable));
+          else
+            host.selected = new Set();
+        }
+      }
+
+      function download() {
+        alert("OK, pretend the files are downloaded now!");
       }
 
       function isAvailable(file) {
