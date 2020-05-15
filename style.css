@@ -25,6 +25,7 @@ header h2 {
   width: 10em;
 }
 header button {
+  background: white;
   padding: var(--action-spacing);
   border-radius: var(--radius);
 }
