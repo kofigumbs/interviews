@@ -29,8 +29,8 @@ function viewHeader(selected, files) {
       <input
         type="checkbox"
         onchange="${toggleAll(files)}"
-        checked="${selected.size === files.length}"
-        indeterminate="${selected.size > 0 && selected.size < files.length}">
+        checked="${selected.size === files.filter(isAvailable).length}"
+        indeterminate="${selected.size > 0 && selected.size < files.filter(isAvailable).length}">
       <h2>${selected.size === 0 ? "None Selected" : "Selected " + selected.size}</h2>
       <button disabled="${selected.size === 0}" onclick="${download(selected)}">
         <!-- https://feathericons.com/ -->
