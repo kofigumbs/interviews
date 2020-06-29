@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+    <title>Hello, Holocene</title>
+    <link rel="stylesheet" href= "style.css"/>
+    <script>
+      /* SETUP GLOBAL ASSUMPTIONS FROM CHALLENGE SPEC
+       */
+
+      // Initial data
+      data = [
+        { 'a': 1, 'b': 3, 'c': 10 },
+        { 'a': 3, 'b': 20, 'c': 12 },
+        { 'a': -1, 'b': -5, 'c': -4 },
+      ];
+
+      // This key is special as it represents the horizontal axis
+      xAxis = "a";
+    </script>
+    <script crossorigin src="https://unpkg.com/@nteract/plotly"></script>
+    <script crossorigin src="script.js"></script>
+  </head>
+  <body>
+    <h1>Responsive "abc" chart</h1>
+    <p>Edit values below to update chart</p>
+    <main>
+      <table><thead><tr></tr></thead><tbody></tbody></table>
+      <figure id="chart"></figure>
+    </main>
+    <error></error>
+  </body>
+</html>

@@ -1,0 +1,69 @@
+html, input {
+  font-size: 16px;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+}
+
+body {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+main {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: center;
+}
+
+figure {
+  margin: 0;
+  width: 100%;
+}
+
+input {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  text-align: right;
+}
+
+th, input {
+  padding: .7rem;
+  box-sizing: border-box;
+}
+
+error {
+  font-weight: bold;
+  background: darkred;
+  color: white;
+  padding: 1rem;
+  border-radius: 2px;
+}
+
+error:empty {
+  display: none;
+}
+
+@media only screen and (min-width: 48rem) {
+  main {
+    flex-direction: row;
+    align-items: start;
+  }
+  table {
+    margin-top: 120px;
+    width: 25%;
+  }
+  figure {
+    flex-order: -1;
+    width: 75%;
+  }
+}
+
+/* Adapteed from <https://jgthms.com/wysiwyg.css/>
+ * No need to include the whole stylesheet, when we only care about table styles for now
+ */
+th, td { font-size: 1em; border: 1px solid #e6e6e6; line-height: 1.4 }
+thead tr { background-color: #f5f5f5 }
+tbody tr { background-color: #fff }
