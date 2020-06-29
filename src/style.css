@@ -1,0 +1,77 @@
+:root {
+  --radius: 2px;
+  --border: solid 1px lightgray;
+  --action-spacing: 0.5rem 1rem;
+}
+body {
+  font-size: 16px;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+  margin: 0 auto;
+  padding: 0 1rem;
+  max-width: 900px;
+}
+header {
+  padding: 2rem 0 1rem;
+}
+header input {
+  margin: var(--action-spacing);
+}
+header * {
+  font-size: 1.5rem;
+}
+header h2 {
+  display: inline-block;
+  margin: 0 1.5rem;
+  width: 10em;
+}
+header button {
+  background: white;
+  padding: var(--action-spacing);
+  border-radius: var(--radius);
+}
+button, tbody tr.is-available {
+  cursor: pointer;
+}
+button[disabled], tbody tr:not(.is-available) {
+  cursor: not-allowed;
+}
+table {
+  width: 100%;
+  border: var(--border);
+  border-collapse: collapse;
+}
+td {
+  padding: var(--action-spacing);
+  border-top: var(--border);
+  border-bottom: var(--border);
+}
+tr {
+  height: 3rem;
+}
+tbody tr:hover {
+  background: #F5F5F5;
+}
+tbody tr.is-active {
+  background: #EEE;
+}
+.status {
+  position: relative;
+  text-transform: capitalize;
+}
+.is-available .status:before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  height: 1rem;
+  width: 1rem;
+  background: #7fd135;
+  border-radius: 50%;
+}
+.error {
+  background: darkred;
+  color: white;
+  font-weight: bold;
+  padding: 3rem;
+  display: block;
+  border-radius: var(--radius);
+}
