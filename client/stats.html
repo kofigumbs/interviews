@@ -1,0 +1,91 @@
+---
+layout: default
+---
+
+<style>
+</style>
+
+<main>
+  {% include back.html %}
+  <h1>Stats from <em id="date"></em></h1>
+  <figure id="video_recv_bits_per_second"></figure>
+  <figure id="video_send_bits_per_second"></figure>
+  <figure id="video_recv_packet_loss"></figure>
+  <figure id="video_send_packet_loss"></figure>
+</main>
+
+<script>
+  {% include shared.js %}
+
+  /* Get stats for each room
+   */
+  const params = new URLSearchParams(location.search);
+  fetch(FIFTEEN_SECONDLY.API + "/rooms/" + params.get("room"))
+    .then(response => response.json())
+    .then(setupPlots)
+    .catch(FIFTEEN_SECONDLY.viewError);
+
+  /* Setup our plots
+   *
+   *   data: {
+   *     room: {
+   *       id: Int,
+   *       name: String,
+   *       url: String,
+   *       created_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
+   *     },
+   *     users: [{
+   *       id: String,
+   *       stats: [{
+   *         room_id: Int,
+   *         user_id: String,
+   *         video_recv_bits_per_second: Int,
+   *         video_recv_packet_loss: Int,
+   *         video_send_bits_per_second: Int,
+   *         video_send_packet_loss: Int,
+   *         recorded_at: String, # TIMESTAMP: YYYY-MM-DD hh:mm:ss ZZZZ
+   *       }]
+   *     }]
+   *   }
+   */
+  function setupPlots(data) {
+    FIFTEEN_SECONDLY.feedbackOnError(() => viewDetails(data));
+  }
+
+  /* Add details for each user
+   *
+   *   data: See #setupPlots
+   */
+  function viewDetails(data) {
+    // Finish the dangling sentence in the <h1>
+    document.getElementById("date").innerText =
+      FIFTEEN_SECONDLY.formatTime(data.room.created_at);
+
+    // In some cases, we may not have enough any stats (if someone created then
+    // left the call quickly). In those scenarios, show an error message.
+    if (data.users.length === 0)
+      return FIFTEEN_SECONDLY.viewError("Short call without stats");
+
+    for (const figure of document.querySelectorAll("figure")) {
+      const traces = data.users.map(user => plotStat(figure.id, user));
+      const layout = { title: figure.id, legend: { x: 0, y: 1.15 } };
+      Plotly.newPlot(figure.id, traces, layout, { responsive: true });
+    }
+  }
+
+  /* Create a Plotly trace for this user stat
+   *
+   *   statName: String
+   *   user: See users[] in #setupPlots
+   *
+   *   Returns: Object <https://plotly.com/javascript/reference/#scatter>
+   */
+  function plotStat(statName, user) {
+    const trace = { type: "scatter", x: [], y: [], name: "User " + user.id };
+    for (const stat of user.stats) {
+      trace.x.push(stat.recorded_at);
+      trace.y.push(stat[statName]);
+    }
+    return trace;
+  }
+</script>

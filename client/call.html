@@ -1,0 +1,148 @@
+---
+layout: default
+---
+
+<style>
+  input {
+    /* This is to support JS copy: shouldn't be visible, but needs to be in DOM.
+       <https://github.com/jgthms/bulma/blob/f75ae3db01cb3be96dde517811f4950540f4c76f/sass/base/helpers.sass#L178-L186>
+     */
+    border: none;
+    clip: rect(0, 0, 0, 0);
+    height: 0.01em;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 0.01em;
+  }
+
+  figure  {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+
+    /* This creates a responsive element with a fixed aspect ratio, here 1:1.
+       It works because padding percentages are in terms of the element's width.
+     */
+    height: 0;
+    padding-bottom: 100%;
+  }
+
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+<main>
+  {% include back.html %}
+  <p><input id="url"><button id="copy">Copy Link</button></p>
+  <figure>
+    <!-- <https://docs.daily.co/reference#%EF%B8%8F-wrap> -->
+    <iframe id="frame" allow="microphone; camera; autoplay" frameborder="0"></iframe>
+  </figure>
+</main>
+
+<script>
+  {% include shared.js %}
+
+  setupCopy();
+  setupFrame();
+
+  /* Setup "Copy Link" function
+   *
+   *   Based on <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Interact_with_the_clipboard#Using_execCommand()>
+   */
+  function setupCopy() {
+    const input = document.getElementById("url");
+    input.value = window.location.href;
+    document.getElementById("copy").addEventListener("click", function() {
+      input.select();
+      document.execCommand("copy");
+    });
+  }
+
+  /* Setup Daily.co call frame
+   *
+   *   This depends on correct values passed in query params,
+   *   so this function first checks that ?id and ?url are present.
+   *   If not, we display an error message in the frame.
+   */
+  function setupFrame() {
+    FIFTEEN_SECONDLY.feedbackOnError(setupCall);
+  }
+
+  /* Join call with Daily.co SDK and setup event listeners
+   */
+  function setupCall() {
+    const frame = document.getElementById("frame");
+    const params = new URLSearchParams(location.search);
+    const callFrame = window.DailyIframe.wrap(frame, {
+      showLeaveButton: true,
+      showFullscreenButton: true,
+    });
+    callFrame.join({ url: atob(params.get("url")) });
+    callFrame.on("loaded", () => onLoaded(params.get("id"), callFrame));
+    callFrame.on("left-meeting", onLeftMeeting);
+    callFrame.on("error", FIFTEEN_SECONDLY.viewError);
+  }
+
+  /* Record stats at 15s granularity
+   *
+   *   Ideally, we would record at the highest granularity (2s) and then
+   *   interpolate the lower resolution when viewing. In the interest of time,
+   *   however, we'll just record at the view resolution .
+   *
+   *   id: Number
+   *   callFrame: DailyIframe <https://docs.daily.co/reference#the-dailyiframe-class>
+   */
+  function onLoaded(id, callFrame) {
+    setInterval(() => newStat(id, callFrame), 15000);
+  }
+
+  /* Go to the dashboard when meeting is left
+   */
+  function onLeftMeeting() {
+    window.location.href = "/";
+  }
+
+  /* Record stat via API
+   *
+   *   id: Number
+   *   callFrame: DailyIframe <https://docs.daily.co/reference#the-dailyiframe-class>
+   */
+  function newStat(id, callFrame) {
+    callFrame.getNetworkStats()
+      .then(data => fetch(FIFTEEN_SECONDLY.API + "/rooms/" + id + "/stat", {
+        method: "POST",
+        body: JSON.stringify(formatStat(data.stats.latest, callFrame.participants())),
+      }))
+      .catch(() => {
+        // This call seems to fail for the first attempts in a new call.
+        // When that happens, we'll just retry on the next animation frame.
+        // Any true errors in the call are handled by the .on("error") listener.
+        requestAnimationFrame(() => newStat(id, callFrame));
+      });
+  }
+
+  /* Format stat for API
+   *
+   *   stat: Object <https://docs.daily.co/reference#%EF%B8%8F-getnetworkstats>
+   *   participants: Object <https://docs.daily.co/reference#%EF%B8%8F-participants>
+   */
+  function formatStat(stat, participants) {
+    return {
+      user_id: participants.local.user_id,
+      recorded_at: moment(stat.timestamp).format(), // ISO 8601
+      video_recv_bits_per_second: stat.videoRecvBitsPerSecond,
+      video_recv_packet_loss: stat.videoRecvPacketLoss,
+      video_send_bits_per_second: stat.videoSendBitsPerSecond,
+      video_send_packet_loss: stat.videoSendPacketLoss,
+    };
+  }
+</script>

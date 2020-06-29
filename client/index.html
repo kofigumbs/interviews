@@ -1,0 +1,69 @@
+---
+layout: default
+---
+
+<style>
+button {
+  font-size: inherit;
+}
+</style>
+
+<main>
+  <h1>Dashboard</h1>
+  <button id="create">New Room</button>
+  <ul id="rooms"></ul>
+</main>
+
+<script>
+  {% include shared.js %}
+
+  setupRooms();
+  document.getElementById("create").addEventListener("click", newRoom);
+
+  /* Get basic info for each room
+   */
+  function setupRooms() {
+    fetch(FIFTEEN_SECONDLY.API + "/rooms", { method: "GET" })
+      .then(response => response.json())
+      .then(viewRooms);
+  }
+
+  /* Create a link to each room's stats
+   *
+   *   array: [{ id: Number, url: String }]
+   */
+  function viewRooms(array) {
+    const parent = document.getElementById("rooms");
+    for (const room of array) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = link("/stats", { room: room.id });
+      a.innerText = FIFTEEN_SECONDLY.formatTime(room.created_at);
+      li.appendChild(a);
+      parent.appendChild(li);
+    }
+  }
+
+  /* Create a new room and navigate to it
+   */
+  function newRoom() {
+    fetch(FIFTEEN_SECONDLY.API + "/rooms", { method: "POST" })
+      .then(response => response.json())
+      .then(room => window.location.href = link("/call", { id: room.id, url: btoa(room.url) }))
+      .catch(FIFTEEN_SECONDLY.viewError);
+  }
+
+  /* Create a relative link with query params
+   *
+   *   path: String
+   *   query: Object { String: String }
+   *
+   * Returns: String
+   */
+  function link(path, query) {
+    const params = new URLSearchParams();
+    for (const [ key, value ] of Object.entries(query))
+      params.append(key, value);
+    return path + "?" + params.toString();
+  }
+</script>
