@@ -73,10 +73,12 @@ layout: default
     }
   }
 
-  /* Add details for each user
+  /* Create a Plotly trace for this user stat
    *
    *   statName: String
    *   user: See users[] in #setupPlots
+   *
+   *   Returns: Object <https://plotly.com/javascript/reference/#scatter>
    */
   function plotStat(statName, user) {
     const trace = { type: "scatter", x: [], y: [], name: "User " + user.id };
